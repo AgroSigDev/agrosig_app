@@ -231,14 +231,15 @@ class _SignInScreenState extends State<SignInScreen> {
       isSigning = true;
     });
 
-      String email = _emailController.text.trim();
-      String password = _passwordController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
 
-      try {
-        final response = await userServices.loginUser(email, password);
+    try {
+      final response = await userServices.loginUser(email, password);
 
-        // El login fue exitoso, los tokens se guardaron en SecureStorage
-        showToast(message: 'Welcome to AgroSig');
+      // VERIFICACIÓN MEJORADA del éxito
+      if (response.resp == true || response.msg.toLowerCase().contains('éxito') || response.msg.toLowerCase().contains('success')) {
+        showToast(message: 'Bienvenido a AgroSig');
 
         // Obtener el perfil del usuario para verificar si tiene parcela configurada
         final userProfile = response.user;
@@ -250,17 +251,26 @@ class _SignInScreenState extends State<SignInScreen> {
         }
 
         clearForm();
-      } catch (e) {
-        print('Login Error: $e');
-        showToast(message: 'Error: ${e.toString()}');
-      } finally {
-        if (mounted) {
-          setState(() {
-            isSigning = false;
-          });
-        }
+      } else {
+        // Si resp es false, mostrar el mensaje de error
+        showToast(message: response.msg);
+      }
+    } catch (e) {
+      print('Login Error: $e');
+      // Extraer solo el mensaje de la excepción
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring('Exception: '.length);
+      }
+      showToast(message: errorMessage);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSigning = false;
+        });
       }
     }
+  }
 
   Future<void> _signInWithGoogle() async {
     try {

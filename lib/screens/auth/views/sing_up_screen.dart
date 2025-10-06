@@ -140,7 +140,8 @@ class _SignUpPageState extends State<SignUpPage> {
             FormFieldAgro(
               controller: _paternalSurnameController,
               hintText: 'Enter your paternal surname',
-              validator: RequiredValidator(errorText: 'Paternal surname is required'),
+              validator: RequiredValidator(
+                  errorText: 'Paternal surname is required'),
             ),
             const SizedBox(height: 15.0),
             const TextCustom(text: 'Maternal Surname'),
@@ -148,7 +149,8 @@ class _SignUpPageState extends State<SignUpPage> {
             FormFieldAgro(
               controller: _maternalSurnameController,
               hintText: 'Enter your maternal surname',
-              validator: RequiredValidator(errorText: 'Maternal surname is required'),
+              validator: RequiredValidator(
+                  errorText: 'Maternal surname is required'),
             ),
             const SizedBox(height: 15.0),
             const TextCustom(text: 'Email'),
@@ -202,41 +204,80 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Future<void> _registerUser() async {
-    if (_keyForm.currentState!.validate()) {
-      setState(() => isSigningUp = true);
+    if (!_keyForm.currentState!.validate()) {
+      showToast(message: 'Por favor, completa todos los campos correctamente');
+      return;
+    }
 
-      final firstName = _firstNameController.text.trim();
-      final paternalSurname = _paternalSurnameController.text.trim();
-      final maternalSurname = _maternalSurnameController.text.trim();
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-      final imagePath = _selectedImage?.path;
+    setState(() => isSigningUp = true);
 
-      try {
-        final response = await userServices.registerUser(
-          firstName,
-          paternalSurname,
-          maternalSurname,
-          imagePath,
-          email,
-          password,
-        );
+    final firstName = _firstNameController.text.trim();
+    final paternalSurname = _paternalSurnameController.text.trim();
+    final maternalSurname = _maternalSurnameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final imagePath = _selectedImage?.path;
 
-        if (response.resp) {
-          modalSuccess(context, 'User Registered Successfully', () {
-            Get.offAll(() => SignInScreen());
-            clearForm();
-          });
-        } else {
-          errorMessageSnack(context, response.msg);
-        }
-      } catch (e) {
-        showToast(message: 'Error: ${e.toString()}');
-      } finally {
-        if (mounted) {
-          setState(() => isSigningUp = false);
-        }
+    try {
+      final response = await userServices.registerUser(
+        firstName,
+        paternalSurname,
+        maternalSurname,
+        imagePath,
+        email,
+        password,
+      );
+
+      if (response.resp) {
+        // Registro exitoso - MOSTRAR TOAST PRIMERO
+        showToast(message: response.msg.isNotEmpty
+            ? response.msg
+            : 'Usuario registrado exitosamente');
+
+        // Luego mostrar modal de éxito
+        modalSuccess(context, response.msg.isNotEmpty
+            ? response.msg
+            : 'Usuario registrado exitosamente', () {
+          Get.offAll(() => SignInScreen());
+          clearForm();
+        });
+      } else {
+        // Error en el registro - MOSTRAR TOAST CON EL ERROR
+        showToast(message: response.msg);
+
+        // Opcional: también mostrar el snackbar si quieres
+        _handleRegistrationError(response.msg);
       }
+    } catch (e) {
+      print('Register Error: $e');
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring('Exception: '.length);
+      }
+      showToast(message: errorMessage);
+    } finally {
+      if (mounted) {
+        setState(() => isSigningUp = false);
+      }
+    }
+  }
+
+  void _handleRegistrationError(String errorMessage) {
+    // Mostrar snackbar además del toast
+    errorMessageSnack(context, errorMessage);
+
+    // Enfocar el campo de email si es error de duplicado
+    if (errorMessage.toLowerCase().contains('email') ||
+        errorMessage.toLowerCase().contains('usuario') ||
+        errorMessage.toLowerCase().contains('exist') ||
+        errorMessage.toLowerCase().contains('ya')) {
+      Future.delayed(Duration(milliseconds: 500), () {
+        FocusScope.of(context).requestFocus(FocusNode());
+        _emailController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _emailController.text.length,
+        );
+      });
     }
   }
 }
