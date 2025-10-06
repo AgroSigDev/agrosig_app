@@ -240,6 +240,31 @@ class UserServices {
     }
   }
 
+  // ========== VERIFY TOKEN VALIDITY ==========
+  Future<bool> verifyTokenValidity() async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      if (token == null) return false;
+
+      // Decodificar el token para verificar expiración
+      final tokenData = _decodeToken(token);
+      final exp = tokenData['exp'] * 1000; // Convertir a milliseconds
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      // Si el token expira en menos de 5 minutos, considerarlo inválido
+      if (exp - now < 5 * 60 * 1000) {
+        // Intentar refresh
+        final newToken = await refreshAccessToken();
+        return newToken != null;
+      }
+
+      return true;
+    } catch (e) {
+      print('Token verification error: $e');
+      return false;
+    }
+  }
+
   // ========== LOGOUT ==========
   Future<void> logout() async {
     try {

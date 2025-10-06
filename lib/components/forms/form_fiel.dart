@@ -9,6 +9,7 @@ class FormFieldAgro extends StatelessWidget {
   final TextInputType keyboardType;
   final int maxLine;
   final bool readOnly;
+  final bool enabled;
   final FormFieldValidator<String>? validator;
 
   const FormFieldAgro({
@@ -18,6 +19,7 @@ class FormFieldAgro extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.maxLine = 1,
     this.readOnly = false,
+    this.enabled = true,
     this.validator
   });
 
@@ -29,6 +31,7 @@ class FormFieldAgro extends StatelessWidget {
       obscureText: isPassword,
       maxLines: maxLine,
       readOnly: readOnly,
+      enabled: enabled,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
