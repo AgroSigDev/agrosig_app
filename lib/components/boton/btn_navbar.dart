@@ -82,7 +82,7 @@ class BottomNavBar extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const IaOnbording(),
+                    builder: (context) => const IAOnbording(),
                   ),
                 );
               },
