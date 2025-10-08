@@ -7,13 +7,12 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
-import '../../config/keys.dart';
-import '../../data/local_secure/secure_storage.dart';
-import '../models/response/response_default.dart';
-import '../models/response/response_login.dart';
-import '../models/response/response_user_update.dart';
-import '../models/user/user_model.dart';
-import 'auth_http_client.dart';
+import '../../../config/keys.dart';
+import '../../../data/local_secure/secure_storage.dart';
+import '../../models/response/response_default/response_default.dart';
+import '../../models/response/response_user/response_login.dart';
+import '../../models/response/response_user/response_user_update.dart';
+import '../../models/user/user_model.dart';
 
 class UserServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
@@ -30,7 +29,7 @@ class UserServices {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${Environment.endpointApiAuth}/register'),
+        Uri.parse('${Environment.auth}/register'),
       );
 
       // Campos que espera tu backend
@@ -88,7 +87,7 @@ class UserServices {
   Future<ResponseLogin> loginUser(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('${Environment.endpointApiAuth}/login'),
+        Uri.parse('${Environment.auth}/login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -162,7 +161,7 @@ class UserServices {
       }
 
       final response = await http.get(
-        Uri.parse('${Environment.endpointApiAuth}/user/profile'),
+        Uri.parse('${Environment.users}/user/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -205,7 +204,7 @@ class UserServices {
       if (refreshToken == null) return null;
 
       final response = await http.post(
-        Uri.parse('${Environment.endpointApiAuth}/auth/refresh'),
+        Uri.parse('${Environment.users}/refresh'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -274,7 +273,7 @@ class UserServices {
       // Opcional: notificar al backend del logout
       if (token != null) {
         await http.post(
-          Uri.parse('${Environment.endpointApiAuth}/auth/logout'),
+          Uri.parse('${Environment.users}/logout'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',

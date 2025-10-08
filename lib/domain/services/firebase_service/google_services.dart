@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../components/toast/toats.dart';
+import '../../../components/toast/toats.dart';
 
 class FirebaseAuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();

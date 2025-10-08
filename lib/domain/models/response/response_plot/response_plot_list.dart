@@ -1,4 +1,4 @@
-import '../plot/plot_model.dart';
+import '../../plot/plot_model.dart';
 
 class PlotListResponse {
   final bool success;

@@ -9,7 +9,6 @@ const greenContainerColor = Color(0xFF357B25);
 const Color lightTextColor = Color(0xE7242424);
 
 const Color lightBg = Color(0xFFD1D9E6);
-const Color orangeColor = Color(0xFFFE7B24);
 const Color darkBgColor = Color(0xFF242424);
 
 class ColorsAgrosig {
@@ -46,5 +45,7 @@ class ColorsAgrosig {
 
   static const textColor = Color(0xFF333333); // Agrega esta línea para definir el color del texto
   static const textColor2 = Color(0xFF311B92);
+
+  static const Color orangeColor = Color(0xFFFE7B24);
 
 }
