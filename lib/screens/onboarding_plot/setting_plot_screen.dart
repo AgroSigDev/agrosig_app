@@ -11,8 +11,8 @@ import '../../components/helper/modal_success.dart';
 import '../../components/picker/map_picker.dart';
 import '../../components/theme/colors_agrosig.dart';
 import '../../components/toast/toats.dart';
-import '../../domain/services/geocodig_services.dart';
-import '../../domain/services/plot_services.dart';
+import '../../domain/services/plot_services/geocodig_services.dart';
+import '../../domain/services/plot_services/plot_services.dart';
 import 'finish_setup_screen.dart';
 
 class SettingPlotScreen extends StatefulWidget {

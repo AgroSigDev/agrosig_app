@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import '../../data/local_secure/secure_storage.dart';
-import '../../domain/services/google_services.dart';
-import '../../domain/services/user_services.dart';
+import '../../domain/services/firebase_service/google_services.dart';
+import '../../domain/services/user_services/user_services.dart';
 import '../auth/views/sign_in_screen.dart';
 
 class StarSetupScreen extends StatefulWidget {

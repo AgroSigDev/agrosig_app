@@ -13,7 +13,7 @@ import '../../../components/helper/validate_form.dart';
 import '../../../components/theme/colors_agrosig.dart';
 import '../../../components/toast/toats.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../../domain/services/user_services.dart';
+import '../../../domain/services/user_services/user_services.dart';
 
 class SignUpPage extends StatefulWidget {
   @override

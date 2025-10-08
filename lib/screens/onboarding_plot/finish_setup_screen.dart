@@ -5,7 +5,7 @@ import '../../components/helper/modal_success.dart';
 import '../../components/toast/toats.dart';
 import '../../components/theme/colors_agrosig.dart';
 import '../../domain/models/plot/plot_model.dart';
-import '../../domain/services/plot_services.dart';
+import '../../domain/services/plot_services/plot_services.dart';
 
 class FinishSetupPlot extends StatefulWidget {
   const FinishSetupPlot({Key? key}) : super(key: key);
@@ -22,6 +22,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
   Plot? _userPlot;
   bool _isLoading = true;
   bool _isEditing = false;
+  String _errorMessage ='';
 
   @override
   void initState() {
@@ -42,27 +43,42 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
   Future<void> _loadUserPlot() async {
     try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
       final plot = await plotServices.getPlotByUserId();
+
+      print('Plot loaded: $plot');
+
       setState(() {
         _userPlot = plot;
         if (plot != null) {
           _plotNameController.text = plot.plot_name;
           _locationController.text = plot.location;
           _areaController.text = plot.area.toString();
+          print('Controllers set with: ${plot.plot_name}, ${plot.location}, ${plot.area}');
+        } else {
+          _errorMessage = 'No se encontró información de la parcela';
         }
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading user plot: $e');
-      showToast(message: 'Error loading plot data');
       setState(() {
+        _errorMessage = 'Error cargando datos: ${e.toString()}';
         _isLoading = false;
       });
+      showToast(message: 'Error loading plot data');
     }
   }
 
   Future<void> _updatePlot() async {
-    if (_userPlot == null) return;
+    if (_userPlot == null) {
+      showToast(message: 'No hay datos de parcela para actualizar');
+      return;
+    }
 
     if (_plotNameController.text.isEmpty ||
         _locationController.text.isEmpty ||
@@ -73,12 +89,15 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
     setState(() {
       _isEditing = true;
+      _errorMessage = '';
     });
 
     try {
-      final area = double.tryParse(_areaController.text);
-      if (area == null) {
-        showToast(message: 'Please enter a valid area');
+      final areaText = _areaController.text.trim().replaceAll(',', '.');
+      final area = double.tryParse(areaText);
+
+      if (area == null || area <= 0) {
+        showToast(message: 'Area must be a valid positive number');
         return;
       }
 
@@ -96,10 +115,16 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
           Get.offAll(() => HomeScreen());
         });
       } else {
+        setState(() {
+          _errorMessage = response.message;
+        });
         showToast(message: response.message);
       }
     } catch (e) {
       print('Error updating plot: $e');
+      setState(() {
+        _errorMessage = 'Error: ${e.toString()}';
+      });
       showToast(message: 'Error updating plot: ${e.toString()}');
     } finally {
       setState(() {
@@ -118,8 +143,36 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(ColorsAgrosig.greenColor),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(ColorsAgrosig.greenColor),
+              ),
+              SizedBox(height: 20),
+              Text('Cargando Informacion de la Parcela...')
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 50),
+              SizedBox(height: 20),
+              Text('Error: $_errorMessage', textAlign: TextAlign.center),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _loadUserPlot,
+                child: Text('Reintentar'),
+              ),
+            ],
           ),
         ),
       );
@@ -143,7 +196,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                     ),
                     child: IconButton(
                       icon: Icon(Icons.close, color: ColorsAgrosig.titleLight),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Get.offAll(() => HomeScreen()),
                     ),
                   ),
                   Spacer(),
@@ -178,7 +231,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
               // Título
               Text(
-                'Farm Set Up Successful! 🎉',
+                'Farm Set Up Successful!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,

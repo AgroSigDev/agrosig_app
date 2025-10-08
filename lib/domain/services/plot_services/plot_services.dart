@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import '../../config/keys.dart';
-import '../../data/local_secure/secure_storage.dart';
-import '../models/response/response_default.dart';
-import '../models/plot/plot_model.dart';
-import '../models/response/response_plot.dart';
-import '../models/response/response_plot_list.dart';
-import '../models/response/response_ubication.dart';
+import '../../../config/keys.dart';
+import '../../../data/local_secure/secure_storage.dart';
+import '../../models/response/response_default/response_default.dart';
+import '../../models/plot/plot_model.dart';
+import '../../models/response/response_plot/response_plot.dart';
+import '../../models/response/response_plot/response_plot_list.dart';
+import '../../models/response/response_plot/response_ubication.dart';
 
 class PlotServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
@@ -36,7 +36,7 @@ class PlotServices {
       print('Area: $area');
 
       final response = await http.post(
-        Uri.parse('${Environment.endpointApiPlots}/register'),
+        Uri.parse('${Environment.plots}/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -70,41 +70,61 @@ class PlotServices {
   }
 
   // ========== GET PLOT BY USER ID ==========
+  // ========== GET PLOT BY USER ID ==========
   Future<Plot?> getPlotByUserId() async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken(); // Corregido: getRefreshToken
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
         throw Exception('Authentication required');
       }
 
-      final response = await http.get(
-        Uri.parse('${Environment.endpointApiPlots}/get-plot/$userId'),
+      // PRIMERO: Obtener las coordenadas para conseguir el plot_id
+      final coordsResponse = await http.get(
+        Uri.parse('${Environment.plots}/ubication-plot/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
       );
 
-      print('Get Plot Status: ${response.statusCode}');
-      print('Get Plot Response: ${response.body}');
+      print('Get Coordinates Status: ${coordsResponse.statusCode}');
+      print('Get Coordinates Response: ${coordsResponse.body}');
 
-      if (response.statusCode == 200) {
-        final decodedData = jsonDecode(response.body);
-        if (decodedData['data'] != null) {
-          return Plot.fromJson(decodedData['data']);
+      if (coordsResponse.statusCode == 200) {
+        final coordsData = jsonDecode(coordsResponse.body);
+        if (coordsData['data'] != null && coordsData['data'].isNotEmpty) {
+          final plotId = coordsData['data'][0]['plot_id'];
+
+          // SEGUNDO: Ahora obtener los datos completos de la parcela
+          final response = await http.get(
+            Uri.parse('${Environment.plots}/get-plot/$plotId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+              'x-refresh-token': refreshToken,
+            },
+          );
+
+          print('Get Plot Status: ${response.statusCode}');
+          print('Get Plot Response: ${response.body}');
+
+          if (response.statusCode == 200) {
+            final decodedData = jsonDecode(response.body);
+            if (decodedData['data'] != null) {
+              return Plot.fromJson(decodedData['data']);
+            }
+          }
         }
         return null;
-      } else if (response.statusCode == 404) {
-        // No plot found for user
-        return null;
       } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['message'] ?? 'Error fetching plot');
+        final errorData = jsonDecode(coordsResponse.body);
+        throw Exception(errorData['message'] ?? 'Error fetching plot coordinates');
       }
     } on SocketException {
       throw Exception('Error de conexión: No hay internet');
@@ -126,7 +146,7 @@ class PlotServices {
       }
 
       final response = await http.get(
-        Uri.parse('${Environment.endpointApiPlots}/ubication-plot/$userId'),
+        Uri.parse('${Environment.plots}/ubication-plot/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -177,7 +197,7 @@ class PlotServices {
       print('Area: $area');
 
       final response = await http.patch(
-        Uri.parse('${Environment.endpointApiPlots}/update/$plotId'),
+        Uri.parse('${Environment.plots}/update/$plotId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -221,7 +241,7 @@ class PlotServices {
       }
 
       final response = await http.delete(
-        Uri.parse('${Environment.endpointApiPlots}/plots/delete/$plotId'),
+        Uri.parse('${Environment.plots}/plots/delete/$plotId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
