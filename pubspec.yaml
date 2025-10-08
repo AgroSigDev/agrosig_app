@@ -94,6 +94,7 @@ dependencies:
 
   googleapis: ^13.2.0
   googleapis_auth: ^1.6.0
+  generative_ai_dart: ^0.1.2
 
 dev_dependencies:
   flutter_test:
