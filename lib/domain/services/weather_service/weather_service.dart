@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
+import '../../models/response/response_weather/response_daily_forecast.dart';
 import '../../models/response/response_weather/response_weather.dart';
 
 class ClimateServices {
@@ -47,7 +48,7 @@ class ClimateServices {
   }
 
   // ========== GET WEEKLY WEATHER ==========
-  Future<ClimateResponse> getWeeklyWeather(int plotId) async {
+  Future<WeeklyForecastResponse> getWeeklyWeather(int plotId) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getAccessToken();
@@ -71,7 +72,7 @@ class ClimateServices {
       print('Weekly Weather Response: ${response.body}');
 
       if (response.statusCode == 200) {
-        return ClimateResponse.fromJson(jsonDecode(response.body));
+        return WeeklyForecastResponse.fromJson(jsonDecode(response.body));
       } else {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData['message'] ?? 'Error fetching weekly weather');
