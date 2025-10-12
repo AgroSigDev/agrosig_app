@@ -11,6 +11,7 @@ class FormFieldAgro extends StatelessWidget {
   final bool readOnly;
   final bool enabled;
   final FormFieldValidator<String>? validator;
+  final Widget? suffixIcon;
 
   const FormFieldAgro({
     this.controller,
@@ -20,7 +21,8 @@ class FormFieldAgro extends StatelessWidget {
     this.maxLine = 1,
     this.readOnly = false,
     this.enabled = true,
-    this.validator
+    this.validator,
+    this.suffixIcon,
   });
 
   @override
@@ -39,6 +41,7 @@ class FormFieldAgro extends StatelessWidget {
         contentPadding: const EdgeInsets.only(left: 15.0),
         hintText: hintText,
         hintStyle: GoogleFonts.getFont('Roboto', color: Colors.grey),
+        suffixIcon: suffixIcon,
       ),
       validator: validator,
     );

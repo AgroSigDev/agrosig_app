@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../../domain/models/weather/weather_model.dart';
 import '../../domain/services/plot_services/plot_services.dart';
-import '../../domain/services/weather_service/weather_service.dart';
+import '../../domain/services/weather_services/weather_service.dart';
 
 class WeatherCard extends StatefulWidget {
   @override
