@@ -5,6 +5,7 @@ import 'package:agrosig/domain/models/crop/crop_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/services/crop_services/crop_services.dart';
+import '../report/report_screen.dart';
 import 'create_crop_screen.dart';
 
 class CropScreen extends StatefulWidget {
@@ -77,21 +78,96 @@ class _CropScreenState extends State<CropScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirmar Eliminación'),
-          content: Text('¿Estás seguro de que deseas eliminar el cultivo "$cropType"?'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Confirmar Eliminación',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de que deseas eliminar el cultivo?',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.agriculture_rounded,
+                      color: Colors.red,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        cropType,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Esta acción no se puede deshacer.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey,
+              ),
               child: const Text('Cancelar'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _deleteCrop(cropId);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               child: const Text(
                 'Eliminar',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -133,6 +209,7 @@ class _CropScreenState extends State<CropScreen> {
   }
 
   void _navigateToGenerateReport() {
+    Get.to(() => SelectCropReportScreen());
     _showSuccessSnackbar('Generando reporte general de cultivos...');
   }
 
@@ -344,7 +421,7 @@ class _CropScreenState extends State<CropScreen> {
                     ),
                   )
                 else
-                // TABLA MEJORADA CON DESPLAZAMIENTO COMPLETO
+
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -420,7 +497,6 @@ class _CropScreenState extends State<CropScreen> {
 
                 const SizedBox(height: 20),
 
-                // PAGINACIÓN MEJORADA
                 if (_crops.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),

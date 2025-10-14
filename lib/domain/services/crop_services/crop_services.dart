@@ -9,7 +9,7 @@ import '../../models/response/response_crop/response_crop.dart';
 class CropService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
 
-  // Crear nuevo cultivo - CORREGIDO
+  // Crear nuevo cultivo
   Future<CropResponse> registerCrop(Crop crop) async {
     try {
       final token = await _secureStorage.getAccessToken();
