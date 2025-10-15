@@ -1,4 +1,4 @@
-import '../../weather/weather_daily_model.dart';
+import '../../models/weather/weather_daily_model.dart';
 
 class WeeklyForecastResponse {
   final bool success;

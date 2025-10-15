@@ -1,17 +1,17 @@
-import '../../plot/plot_model.dart';
+import '../../models/plot/plot_model.dart';
 
-class UbicationResponse {
+class PlotListResponse {
   final bool success;
   final String message;
   final List<Plot> data;
 
-  UbicationResponse({
+  PlotListResponse({
     required this.success,
     required this.message,
     required this.data,
   });
 
-  factory UbicationResponse.fromJson(Map<String, dynamic> json) => UbicationResponse(
+  factory PlotListResponse.fromJson(Map<String, dynamic> json) => PlotListResponse(
     success: json["success"] ?? false,
     message: json["message"] ?? '',
     data: json["data"] != null

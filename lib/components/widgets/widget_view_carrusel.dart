@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 
 import '../../screens/activitys/activitys_screen.dart';
@@ -6,45 +7,49 @@ import '../../screens/crop/crop_screen.dart';
 import '../../screens/production_batch/production_batch_screen.dart';
 import '../../screens/weather/weather_screen.dart';
 
-class ViewCarousel extends StatefulWidget {
+final selectedCropIdProvider = StateProvider<int>((ref) => 1); // Valor por defecto
+
+class ViewCarousel extends ConsumerStatefulWidget {
   const ViewCarousel({super.key});
 
   @override
-  State<ViewCarousel> createState() => _ViewCarouselState();
+  ConsumerState<ViewCarousel> createState() => _ViewCarouselState();
 }
 
-class _ViewCarouselState extends State<ViewCarousel> {
+class _ViewCarouselState extends ConsumerState<ViewCarousel> {
   int _selectedIndex = 0;
-
-  final List<ViewCarouselItem> _carouselItems = [
-    ViewCarouselItem(
-      title: "Meteorología",
-      imagePath: "assets/images/meteorologia_1.png",
-      iconBgColor: Colors.grey[300]!,
-      page: WeatherScreen(),
-    ),
-    ViewCarouselItem(
-      title: "Cultivos",
-      imagePath: "assets/images/campo.png",
-      iconBgColor: Colors.grey[300]!,
-      page: CropScreen(),
-    ),
-    ViewCarouselItem(
-      title: "Actividad",
-      imagePath: "assets/images/agregar_tarea.png",
-      iconBgColor: Colors.grey[300]!,
-      page: ActivitysScreen(),
-    ),
-    ViewCarouselItem(
-      title: "Producción",
-      imagePath: "assets/images/produccion.png",
-      iconBgColor: Colors.grey[300]!,
-      page: ProductionBatchScreen(),
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final cropId = ref.watch(selectedCropIdProvider);
+
+    final List<ViewCarouselItem> _carouselItems = [
+      ViewCarouselItem(
+        title: "Meteorología",
+        imagePath: "assets/images/meteorologia_1.png",
+        iconBgColor: Colors.grey[300]!,
+        page: const WeatherScreen(),
+      ),
+      ViewCarouselItem(
+        title: "Cultivos",
+        imagePath: "assets/images/campo.png",
+        iconBgColor: Colors.grey[300]!,
+        page: const CropScreen(),
+      ),
+      ViewCarouselItem(
+        title: "Actividad",
+        imagePath: "assets/images/agregar_tarea.png",
+        iconBgColor: Colors.grey[300]!,
+        page: ActivitysScreen(cropId: cropId), // Pasar el cropId actual
+      ),
+      ViewCarouselItem(
+        title: "Producción",
+        imagePath: "assets/images/produccion.png",
+        iconBgColor: Colors.grey[300]!,
+        page: const ProductionBatchScreen(),
+      ),
+    ];
+
     return Column(
       children: [
         const Row(

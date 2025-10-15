@@ -4,7 +4,7 @@ import 'package:agrosig/config/keys.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:agrosig/domain/models/crop/crop_model.dart';
-import '../../models/response/response_crop/response_crop.dart';
+import '../../response/response_crop/response_crop.dart';
 
 class CropService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();

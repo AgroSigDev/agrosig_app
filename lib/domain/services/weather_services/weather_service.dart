@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../models/response/response_weather/response_daily_forecast.dart';
-import '../../models/response/response_weather/response_weather.dart';
+import '../../response/response_weather/response_daily_forecast.dart';
+import '../../response/response_weather/response_weather.dart';
 
 class ClimateServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();

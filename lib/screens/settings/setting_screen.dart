@@ -5,7 +5,7 @@ import '../../components/custom/text_custom.dart';
 import '../../components/item_account.dart';
 import '../../config/keys.dart';
 import '../../data/local_secure/secure_storage.dart';
-import '../../domain/models/response/response_user/response_user_update.dart';
+import '../../domain/response/response_user/response_user_update.dart';
 import '../../domain/services/firebase_service/google_services.dart';
 import '../../domain/services/user_services/user_services.dart';
 import '../auth/views/sign_in_screen.dart';

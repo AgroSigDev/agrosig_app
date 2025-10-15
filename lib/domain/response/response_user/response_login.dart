@@ -1,4 +1,4 @@
-import '../../user/user_model.dart';
+import '../../models/user/user_model.dart';
 
 class ResponseLogin {
 
