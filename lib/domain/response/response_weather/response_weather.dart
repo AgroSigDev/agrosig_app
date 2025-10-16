@@ -1,4 +1,4 @@
-import '../../weather/weather_model.dart';
+import '../../models/weather/weather_model.dart';
 
 class ClimateResponse {
   final bool success;

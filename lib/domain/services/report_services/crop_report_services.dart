@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import '../../models/report/report_model.dart';
-import '../../models/response/response_report/response_report.dart';
+import '../../response/response_report/response_report.dart';
 
 class CropReportService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();

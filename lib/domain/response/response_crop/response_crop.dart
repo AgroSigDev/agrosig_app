@@ -1,4 +1,4 @@
-import '../../crop/crop_model.dart';
+import '../../models/crop/crop_model.dart';
 
 class CropResponse {
   final bool success;

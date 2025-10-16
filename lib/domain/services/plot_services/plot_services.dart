@@ -3,11 +3,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../models/response/response_default/response_default.dart';
 import '../../models/plot/plot_model.dart';
-import '../../models/response/response_plot/response_plot.dart';
-import '../../models/response/response_plot/response_plot_list.dart';
-import '../../models/response/response_plot/response_ubication.dart';
+import '../../response/response_default/response_default.dart';
+import '../../response/response_plot/response_plot.dart';
+import '../../response/response_plot/response_ubication.dart';
 
 class PlotServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();

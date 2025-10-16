@@ -1,5 +1,5 @@
-import '../../crop/crop_model.dart';
-import '../../report/report_model.dart';
+import '../../models/crop/crop_model.dart';
+import '../../models/report/report_model.dart';
 
 class CropReportResponse {
   final bool success;

@@ -9,10 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../models/response/response_default/response_default.dart';
-import '../../models/response/response_user/response_login.dart';
-import '../../models/response/response_user/response_user_update.dart';
 import '../../models/user/user_model.dart';
+import '../../response/response_default/response_default.dart';
+import '../../response/response_user/response_login.dart';
 
 class UserServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
