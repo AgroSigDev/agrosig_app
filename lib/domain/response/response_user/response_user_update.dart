@@ -27,7 +27,6 @@ class UserUpdated {
   final String email;
   final String phone;
   final int id_rol;
-  final String notificationToken;
   final bool parcela_configurada;
 
   UserUpdated({
@@ -38,7 +37,6 @@ class UserUpdated {
     required this.email,
     required this.phone,
     required this.id_rol,
-    required this.notificationToken,
     required this.parcela_configurada
   });
 
@@ -50,7 +48,6 @@ class UserUpdated {
       email: json["email"],
       phone: json["phone"],
       id_rol: json["id_rol"],
-      notificationToken: json["notificationToken"],
       parcela_configurada: json["parcela_configurada"]
   );
 }

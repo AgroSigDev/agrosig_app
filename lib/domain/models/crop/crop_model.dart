@@ -41,7 +41,7 @@ class Crop {
           ? DateTime.parse(json['harvest_date'])
           : null,
       isActive: json['is_active'] ?? true,
-      costTotal: _parseCostTotal(json['cost_total']), // CORREGIDO
+      costTotal: _parseCostTotal(json['cost_total']),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       plotName: json['plot_name'],

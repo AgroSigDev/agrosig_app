@@ -124,6 +124,7 @@ flutter:
     - assets/animation/
     - assets/icons/
     - assets/images/
+    - assets/cert/
     - .env
   #   - images/a_dot_ham.jpeg
 

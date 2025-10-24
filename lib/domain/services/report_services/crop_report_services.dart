@@ -5,11 +5,15 @@ import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import '../../../data/core/custom_http_client.dart';
 import '../../models/report/report_model.dart';
 import '../../response/response_report/response_report.dart';
 
 class CropReportService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  CropReportService() : _client = CustomHttpClient.create();
 
   // Obtener datos del reporte (este está bien)
   Future<CropReportResponse> getReportData(int cropId) async {
@@ -21,7 +25,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-data/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +70,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-pdf/$cropId'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -122,7 +126,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-pdf/$cropId'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -145,5 +149,9 @@ class CropReportService {
     } catch (error) {
       throw Exception('Error al descargar el reporte: ${error.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

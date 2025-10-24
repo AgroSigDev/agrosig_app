@@ -4,10 +4,14 @@ import 'package:agrosig/config/keys.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:agrosig/domain/models/crop/crop_model.dart';
+import '../../../data/core/custom_http_client.dart';
 import '../../response/response_crop/response_crop.dart';
 
 class CropService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  CropService() : _client = CustomHttpClient.create();
 
   // Crear nuevo cultivo
   Future<CropResponse> registerCrop(Crop crop) async {
@@ -19,7 +23,7 @@ class CropService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.crop}/register'),
         headers: {
           'Content-Type': 'application/json',
@@ -27,7 +31,7 @@ class CropService {
           'Authorization': 'Bearer $token',
           'x-refresh-token': refreshToken,
         },
-        body: jsonEncode(crop.toCreateJson()), // CORREGIDO: sin llaves extras
+        body: jsonEncode(crop.toCreateJson()),
       );
 
       print('Crop Status: ${response.statusCode}');
@@ -66,7 +70,7 @@ class CropService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.crop}/crops?page=$page&limit=$limit'),
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +133,7 @@ class CropService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.crop}/crop/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +179,7 @@ class CropService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('${Environment.crop}/update/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +226,7 @@ class CropService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.delete(
+      final response = await _client.delete(
         Uri.parse('${Environment.crop}/delete/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -235,9 +239,7 @@ class CropService {
       print('Delete Crop Status: ${response.statusCode}');
       print('Delete Crop Response: ${response.body}');
 
-      // Manejar correctamente el status 204 (No Content)
       if (response.statusCode == 204 || response.statusCode == 200) {
-        // Para status 204, la respuesta está vacía - no intentar parsear JSON
         if (response.statusCode == 204) {
           return CropResponse(
             success: true,
@@ -245,7 +247,6 @@ class CropService {
             data: null,
           );
         } else {
-          // Para status 200, intentar parsear la respuesta si existe
           if (response.body.isNotEmpty) {
             final decodedData = jsonDecode(response.body);
             return CropResponse(
@@ -263,7 +264,6 @@ class CropService {
           }
         }
       } else {
-        // Manejar otros códigos de error
         if (response.body.isNotEmpty) {
           final errorData = json.decode(response.body);
           return CropResponse(
@@ -297,5 +297,9 @@ class CropService {
       print('Error deleting crop: $error');
       throw Exception('Error en el servidor: ${error.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

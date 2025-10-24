@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'package:agrosig/data/core/custom_http_client.dart';
+import 'package:agrosig/domain/response/response_user/response_user_update.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -15,6 +17,9 @@ import '../../response/response_user/response_login.dart';
 
 class UserServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  UserServices() : _client = CustomHttpClient.create();
 
   // ========== REGISTER ==========
   Future<ResponseDefault> registerUser(
@@ -31,7 +36,7 @@ class UserServices {
         Uri.parse('${Environment.auth}/register'),
       );
 
-      // Campos que espera tu backend
+      // Campos
       request.fields['first_name'] = firstName;
       request.fields['paternal_surname'] = paternalSurname;
       request.fields['maternal_surname'] = maternalSurname;
@@ -48,21 +53,22 @@ class UserServices {
         );
       }
 
-      var response = await request.send();
-      var responseData = await http.Response.fromStream(response);
+      // Envio con cliente personalizado
+      var streamedResponse = await _client.send(request);
+      var response = await http.Response.fromStream(streamedResponse);
 
       print('Register Status: ${response.statusCode}');
-      print('Register Response: ${responseData.body}');
+      print('Register Response: ${response.body}');
 
       if (response.statusCode == 201) {
-        final decodedData = jsonDecode(responseData.body);
+        final decodedData = jsonDecode(response.body);
 
         return ResponseDefault(
           resp: true,
           msg: decodedData['message'] ?? 'Usuario registrado exitosamente',
         );
       } else {
-        final errorData = jsonDecode(responseData.body);
+        final errorData = jsonDecode(response.body);
         return ResponseDefault(
           resp: false,
           msg: errorData['message'] ?? 'Error en el registro',
@@ -85,7 +91,7 @@ class UserServices {
   // ========== LOGIN ==========
   Future<ResponseLogin> loginUser(String email, String password) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.auth}/login'),
         headers: {
           'Content-Type': 'application/json',
@@ -154,19 +160,20 @@ class UserServices {
   Future<User> getUserProfile() async {
     try {
       final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
+      final userId = await _secureStorage.getUserId();
 
-      if (token == null) {
+      if (token == null || refreshToken == null || userId == null) {
         throw Exception('Usuario no autenticado');
       }
 
-      final response = await http.get(
-        Uri.parse('${Environment.users}/user/profile'),
+      final response = await _client.get(
+        Uri.parse('${Environment.users}/get-user/${userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          // O si tu backend usa 'xx-token'
-          'xx-token': token,
+          'x-refresh-token': refreshToken,
         },
       );
 
@@ -202,7 +209,7 @@ class UserServices {
 
       if (refreshToken == null) return null;
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.users}/refresh'),
         headers: {
           'Content-Type': 'application/json',
@@ -288,6 +295,10 @@ class UserServices {
       // Siempre limpiar datos locales
       await _secureStorage.clearAllData();
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }
 

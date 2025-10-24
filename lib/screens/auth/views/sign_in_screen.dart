@@ -237,7 +237,6 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       final response = await userServices.loginUser(email, password);
 
-      // VERIFICACIÓN MEJORADA del éxito
       if (response.resp == true || response.msg.toLowerCase().contains('éxito') || response.msg.toLowerCase().contains('success')) {
         showToast(message: 'Bienvenido a AgroSig');
 
@@ -252,7 +251,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
         clearForm();
       } else {
-        // Si resp es false, mostrar el mensaje de error
         showToast(message: response.msg);
       }
     } catch (e) {
