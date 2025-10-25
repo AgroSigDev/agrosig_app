@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:agrosig/config/keys.dart';
+import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../models/activitys/activitys_model.dart';
@@ -9,6 +10,9 @@ import '../../response/response_activitys/response_activitys.dart';
 
 class ActivityService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  ActivityService() : _client = CustomHttpClient.create();
 
   // Registrar una nueva actividad con insumos
   Future<ActivityResponse> registerActivity(
@@ -33,7 +37,7 @@ class ActivityService {
 
       print('Request Body: ${jsonEncode(requestBody)}');
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.activity}/register/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +76,7 @@ class ActivityService {
         throw Exception('No se encontró token de autenticación');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.activity}/crop/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -120,5 +124,9 @@ class ActivityService {
       print('Error getting activities: $error');
       throw Exception('Error obteniendo actividades: ${error.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:http/http.dart' as http;
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
@@ -8,6 +9,9 @@ import '../../response/response_weather/response_weather.dart';
 
 class ClimateServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  ClimateServices() : _client = CustomHttpClient.create();
 
   // ========== GET CURRENT WEATHER ==========
   Future<ClimateResponse> getWeather(int plotId) async {
@@ -20,7 +24,7 @@ class ClimateServices {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.weather}/get-weather/$plotId'),
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +62,7 @@ class ClimateServices {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.weather}/get-weekly/$plotId'),
         headers: {
           'Content-Type': 'application/json',
@@ -83,6 +87,10 @@ class ClimateServices {
       print('Get weekly weather error: $e');
       throw Exception('Error fetching weekly weather: ${e.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -15,6 +16,9 @@ import '../../response/response_user/response_login.dart';
 
 class UserServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  UserServices() : _client = CustomHttpClient.create();
 
   // ========== REGISTER ==========
   Future<ResponseDefault> registerUser(
@@ -85,7 +89,7 @@ class UserServices {
   // ========== LOGIN ==========
   Future<ResponseLogin> loginUser(String email, String password) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.auth}/login'),
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +163,7 @@ class UserServices {
         throw Exception('Usuario no autenticado');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.users}/user/profile'),
         headers: {
           'Content-Type': 'application/json',
@@ -177,10 +181,9 @@ class UserServices {
         final decodedData = jsonDecode(response.body);
         return User.fromJson(decodedData['data'] ?? decodedData);
       } else if (response.statusCode == 401) {
-        // Token expirado, intentar refresh
         final newToken = await refreshAccessToken();
         if (newToken != null) {
-          return getUserProfile(); // Reintentar con nuevo token
+          return getUserProfile();
         } else {
           await _secureStorage.clearAllData();
           throw Exception('Sesión expirada');
@@ -202,7 +205,7 @@ class UserServices {
 
       if (refreshToken == null) return null;
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.users}/refresh'),
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +225,7 @@ class UserServices {
         if (userId != null && newAccessToken != null) {
           await _secureStorage.persistUserData(
             newAccessToken,
-            newRefreshToken ?? refreshToken, // Si no viene nuevo refresh, mantener el actual
+            newRefreshToken ?? refreshToken,
             userId,
           );
         }
@@ -271,7 +274,7 @@ class UserServices {
 
       // Opcional: notificar al backend del logout
       if (token != null) {
-        await http.post(
+        await _client.post(
           Uri.parse('${Environment.users}/logout'),
           headers: {
             'Content-Type': 'application/json',
@@ -288,6 +291,10 @@ class UserServices {
       // Siempre limpiar datos locales
       await _secureStorage.clearAllData();
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }
 

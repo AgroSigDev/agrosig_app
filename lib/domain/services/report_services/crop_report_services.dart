@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:agrosig/config/keys.dart';
+import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -10,8 +11,11 @@ import '../../response/response_report/response_report.dart';
 
 class CropReportService {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
 
-  // Obtener datos del reporte (este está bien)
+  CropReportService() : _client = CustomHttpClient.create();
+
+  // Obtener datos del reporte
   Future<CropReportResponse> getReportData(int cropId) async {
     try {
       final token = await _secureStorage.getAccessToken();
@@ -21,7 +25,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-data/$cropId'),
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +60,7 @@ class CropReportService {
     }
   }
 
-  // DESCARGAR Y ABRIR PDF - CORREGIDO
+  // DESCARGAR Y ABRIR PDF
   Future<void> downloadAndOpenReportPDF(int cropId, String cropName) async {
     try {
       final token = await _secureStorage.getAccessToken();
@@ -66,7 +70,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-pdf/$cropId'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -92,7 +96,6 @@ class CropReportService {
         await OpenFile.open(file.path);
 
       } else {
-        // Manejar error
         if (response.body.isNotEmpty) {
           try {
             final errorData = json.decode(utf8.decode(response.bodyBytes));
@@ -122,7 +125,7 @@ class CropReportService {
         throw Exception('No authentication token found');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.report}/report-pdf/$cropId'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -145,5 +148,9 @@ class CropReportService {
     } catch (error) {
       throw Exception('Error al descargar el reporte: ${error.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

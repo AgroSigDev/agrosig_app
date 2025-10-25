@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:http/http.dart' as http;
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
@@ -10,6 +11,9 @@ import '../../response/response_plot/response_ubication.dart';
 
 class PlotServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
+  final http.Client _client;
+
+  PlotServices() : _client = CustomHttpClient.create();
 
   // ========== REGISTER PLOT ==========
   Future<PlotResponse> registerPlot({
@@ -34,7 +38,7 @@ class PlotServices {
       print('Lat: $lat, Long: $long');
       print('Area: $area');
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('${Environment.plots}/register'),
         headers: {
           'Content-Type': 'application/json',
@@ -69,19 +73,18 @@ class PlotServices {
   }
 
   // ========== GET PLOT BY USER ID ==========
-  // ========== GET PLOT BY USER ID ==========
   Future<Plot?> getPlotByUserId() async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getRefreshToken(); // Corregido: getRefreshToken
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
         throw Exception('Authentication required');
       }
 
-      // PRIMERO: Obtener las coordenadas para conseguir el plot_id
-      final coordsResponse = await http.get(
+      // Obtener las coordenadas para conseguir el plot_id
+      final coordsResponse = await _client.get(
         Uri.parse('${Environment.plots}/ubication-plot/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -99,8 +102,8 @@ class PlotServices {
         if (coordsData['data'] != null && coordsData['data'].isNotEmpty) {
           final plotId = coordsData['data'][0]['plot_id'];
 
-          // SEGUNDO: Ahora obtener los datos completos de la parcela
-          final response = await http.get(
+          // obtener los datos de la parcela
+          final response = await _client.get(
             Uri.parse('${Environment.plots}/get-plot/$plotId'),
             headers: {
               'Content-Type': 'application/json',
@@ -144,7 +147,7 @@ class PlotServices {
         throw Exception('Authentication required');
       }
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('${Environment.plots}/ubication-plot/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -195,7 +198,7 @@ class PlotServices {
       print('Lat: $lat, Long: $long');
       print('Area: $area');
 
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('${Environment.plots}/update/$plotId'),
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +242,7 @@ class PlotServices {
         throw Exception('Authentication required');
       }
 
-      final response = await http.delete(
+      final response = await _client.delete(
         Uri.parse('${Environment.plots}/plots/delete/$plotId'),
         headers: {
           'Content-Type': 'application/json',
@@ -266,6 +269,10 @@ class PlotServices {
       print('Delete plot error: $e');
       throw Exception('Error deleting plot: ${e.toString()}');
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }
 
