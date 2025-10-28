@@ -14,7 +14,7 @@ import '../../../components/helper/validate_form.dart';
 import '../../../components/theme/colors_agrosig.dart';
 import '../../../components/toast/toats.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../../domain/services/user_services/user_services.dart';
+import '../../../domain/services/auth_services/auth_services.dart';
 import '../../home/home_screen.dart';
 import '../../onboarding_plot/start_setup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -235,14 +235,28 @@ class _SignInScreenState extends State<SignInScreen> {
     String password = _passwordController.text.trim();
 
     try {
-      final response = await userServices.loginUser(email, password);
 
-      // VERIFICACIÓN MEJORADA del éxito
+      final response = await authServices.loginUser(
+          email: email,
+          password: password
+      );
+
       if (response.resp == true || response.msg.toLowerCase().contains('éxito') || response.msg.toLowerCase().contains('success')) {
         showToast(message: 'Bienvenido a AgroSig');
 
+        final token = await secureStorage.getAccessToken();
+        final refreshToken = await secureStorage.getRefreshToken();
+        final userId = await secureStorage.getUserId();
+
+
+        if (token == null || refreshToken == null || userId == null) {
+          throw Exception('Error: Los tokens no se guardaron correctamente');
+        }
+
         // Obtener el perfil del usuario para verificar si tiene parcela configurada
         final userProfile = response.user;
+
+        print('User configured_plot: ${userProfile.configured_plot}');
 
         if (userProfile.configured_plot) {
           Get.offAll(() => HomeScreen());
@@ -252,12 +266,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
         clearForm();
       } else {
-        // Si resp es false, mostrar el mensaje de error
         showToast(message: response.msg);
       }
     } catch (e) {
-      print('Login Error: $e');
-      // Extraer solo el mensaje de la excepción
       String errorMessage = e.toString();
       if (errorMessage.startsWith('Exception: ')) {
         errorMessage = errorMessage.substring('Exception: '.length);

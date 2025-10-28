@@ -13,7 +13,7 @@ import '../../../components/helper/validate_form.dart';
 import '../../../components/theme/colors_agrosig.dart';
 import '../../../components/toast/toats.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../../domain/services/user_services/user_services.dart';
+import '../../../domain/services/auth_services/auth_services.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -219,7 +219,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final imagePath = _selectedImage?.path;
 
     try {
-      final response = await userServices.registerUser(
+      final response = await authServices.registerUser(
         firstName,
         paternalSurname,
         maternalSurname,
@@ -229,12 +229,10 @@ class _SignUpPageState extends State<SignUpPage> {
       );
 
       if (response.resp) {
-        // Registro exitoso - MOSTRAR TOAST PRIMERO
         showToast(message: response.msg.isNotEmpty
             ? response.msg
             : 'Usuario registrado exitosamente');
 
-        // Luego mostrar modal de éxito
         modalSuccess(context, response.msg.isNotEmpty
             ? response.msg
             : 'Usuario registrado exitosamente', () {
@@ -242,10 +240,8 @@ class _SignUpPageState extends State<SignUpPage> {
           clearForm();
         });
       } else {
-        // Error en el registro - MOSTRAR TOAST CON EL ERROR
         showToast(message: response.msg);
 
-        // Opcional: también mostrar el snackbar si quieres
         _handleRegistrationError(response.msg);
       }
     } catch (e) {
@@ -266,7 +262,6 @@ class _SignUpPageState extends State<SignUpPage> {
     // Mostrar snackbar además del toast
     errorMessageSnack(context, errorMessage);
 
-    // Enfocar el campo de email si es error de duplicado
     if (errorMessage.toLowerCase().contains('email') ||
         errorMessage.toLowerCase().contains('usuario') ||
         errorMessage.toLowerCase().contains('exist') ||

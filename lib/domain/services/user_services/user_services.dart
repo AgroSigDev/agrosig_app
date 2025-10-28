@@ -1,18 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'package:agrosig/data/core/custom_http_client.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
 import '../../../config/keys.dart';
 import '../../../data/local_secure/secure_storage.dart';
 import '../../models/user/user_model.dart';
 import '../../response/response_default/response_default.dart';
-import '../../response/response_user/response_login.dart';
 
 class UserServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
@@ -20,277 +14,331 @@ class UserServices {
 
   UserServices() : _client = CustomHttpClient.create();
 
-  // ========== REGISTER ==========
-  Future<ResponseDefault> registerUser(
-      String firstName,
-      String paternalSurname,
-      String maternalSurname,
-      String? imagePath,
-      String email,
-      String password,
-      ) async {
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${Environment.auth}/register'),
-      );
-
-      // Campos que espera tu backend
-      request.fields['first_name'] = firstName;
-      request.fields['paternal_surname'] = paternalSurname;
-      request.fields['maternal_surname'] = maternalSurname;
-      request.fields['email'] = email;
-      request.fields['password'] = password;
-
-      // Imagen opcional
-      if (imagePath != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image_user',
-            imagePath,
-          ),
-        );
-      }
-
-      var response = await request.send();
-      var responseData = await http.Response.fromStream(response);
-
-      print('Register Status: ${response.statusCode}');
-      print('Register Response: ${responseData.body}');
-
-      if (response.statusCode == 201) {
-        final decodedData = jsonDecode(responseData.body);
-
-        return ResponseDefault(
-          resp: true,
-          msg: decodedData['message'] ?? 'Usuario registrado exitosamente',
-        );
-      } else {
-        final errorData = jsonDecode(responseData.body);
-        return ResponseDefault(
-          resp: false,
-          msg: errorData['message'] ?? 'Error en el registro',
-        );
-      }
-    } on SocketException {
-      return ResponseDefault(
-        resp: false,
-        msg: 'Error de conexión: No hay internet',
-      );
-    } catch (e) {
-      print('Register error: $e');
-      return ResponseDefault(
-        resp: false,
-        msg: 'Error inesperado: ${e.toString()}',
-      );
-    }
-  }
-
-  // ========== LOGIN ==========
-  Future<ResponseLogin> loginUser(String email, String password) async {
-    try {
-      final response = await _client.post(
-        Uri.parse('${Environment.auth}/login'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      print('Login Status: ${response.statusCode}');
-      print('Login Response: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final decodedData = jsonDecode(response.body);
-        final responseLogin = ResponseLogin.fromJson(decodedData);
-
-        if (responseLogin.token.isNotEmpty) {
-          // Decodificar el token para obtener el user_id
-          final tokenData = _decodeToken(responseLogin.token);
-          final userId = tokenData['user_id'];
-
-          if (userId != null) {
-            await _secureStorage.persistUserData(
-              responseLogin.token,
-              responseLogin.refreshToken,
-              userId,
-            );
-          }
-        }
-
-        return responseLogin;
-      } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['message'] ?? 'Error en el login');
-      }
-    } on SocketException {
-      throw Exception('Error de conexión: No hay internet');
-    } catch (e) {
-      print('Login error: $e');
-      throw Exception('Error en el login: ${e.toString()}');
-    }
-  }
-
-  // ========== DECODE JWT TOKEN ==========
-  Map<String, dynamic> _decodeToken(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        throw Exception('Token inválido');
-      }
-
-      final payload = parts[1];
-      var normalized = base64Url.normalize(payload);
-      var decoded = utf8.decode(base64Url.decode(normalized));
-
-      return jsonDecode(decoded);
-    } catch (e) {
-      print('Error decoding token: $e');
-      return {};
-    }
-  }
-
   // ========== GET USER PROFILE ==========
   Future<User> getUserProfile() async {
     try {
       final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
+      final userId = await _secureStorage.getUserId();
 
-      if (token == null) {
+      print('Token: $token');
+      print('RefreshToken: $refreshToken');
+      print('UserID: $userId');
+
+      if (token == null || refreshToken == null || userId == null) {
         throw Exception('Usuario no autenticado');
       }
 
       final response = await _client.get(
-        Uri.parse('${Environment.users}/user/profile'),
+        Uri.parse('${Environment.users}/get-user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          // O si tu backend usa 'xx-token'
-          'xx-token': token,
+          'x-refresh-token': refreshToken,
         },
       );
 
       print('Get Profile Status: ${response.statusCode}');
+      print('Get Profile Headers: ${response.headers}');
       print('Get Profile Response: ${response.body}');
+
+      // ✅ Verificar si hay nuevo token en los headers
+      final newAccessToken = response.headers['x-new-access-token'];
+      if (newAccessToken != null) {
+        print('Nuevo token recibido: $newAccessToken');
+        await _secureStorage.setAccessToken(newAccessToken);
+      }
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
-        return User.fromJson(decodedData['data'] ?? decodedData);
-      } else if (response.statusCode == 401) {
-        final newToken = await refreshAccessToken();
-        if (newToken != null) {
-          return getUserProfile();
+        if (decodedData['success'] == true) {
+          return User.fromJson(decodedData['data']);
         } else {
-          await _secureStorage.clearAllData();
-          throw Exception('Sesión expirada');
+          throw Exception(decodedData['message'] ?? 'Error al obtener perfil');
         }
+      } else if (response.statusCode == 401) {
+        // Si llega aquí, significa que ambos tokens fallaron
+        await _secureStorage.clearAllData();
+        throw Exception('Sesión expirada, por favor inicie sesión nuevamente');
+      } else if (response.statusCode == 404) {
+        throw Exception('Usuario no encontrado');
       } else {
-        throw Exception('Error al obtener perfil: ${response.statusCode}');
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error del servidor: ${response.statusCode}');
       }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
     } catch (e) {
       print('Get profile error: $e');
       rethrow;
     }
   }
 
-  // ========== REFRESH TOKEN ==========
-  Future<String?> refreshAccessToken() async {
+  // ========== UPDATE USER PROFILE ==========
+  Future<User> updateUserProfile({
+    required String first_name,
+    required String paternal_surname,
+    required String maternal_surname,
+    required String email,
+  }) async {
     try {
+      final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
-      if (refreshToken == null) return null;
+      if (token == null || refreshToken == null || userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
 
-      final response = await _client.post(
-        Uri.parse('${Environment.users}/refresh'),
+      final response = await _client.patch(
+        Uri.parse('${Environment.users}/update-profile/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken,
         },
         body: jsonEncode({
-          'refreshToken': refreshToken,
-          'userId': userId,
+          'first_name': first_name,
+          'paternal_surname': paternal_surname,
+          'maternal_surname': maternal_surname,
+          'email': email,
         }),
       );
 
+      final newAccessToken = response.headers['x-new-access-token'];
+
+      if (newAccessToken != null) {
+        await _secureStorage.setAccessToken(newAccessToken);
+      }
+
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
-        final newAccessToken = decodedData['accessToken'];
-        final newRefreshToken = decodedData['refreshToken'];
-
-        if (userId != null && newAccessToken != null) {
-          await _secureStorage.persistUserData(
-            newAccessToken,
-            newRefreshToken ?? refreshToken,
-            userId,
-          );
+        if (decodedData['success'] == true) {
+          return User.fromJson(decodedData['data']);
+        } else {
+          throw Exception(decodedData['message'] ?? 'Error al actualizar perfil');
         }
-
-        return newAccessToken;
-      } else {
+      } else if (response.statusCode == 401) {
         await _secureStorage.clearAllData();
-        return null;
+        throw Exception('Sesión expirada');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error al actualizar perfil');
       }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
     } catch (e) {
-      await _secureStorage.clearAllData();
-      return null;
+      print('Update profile error: $e');
+      rethrow;
     }
   }
 
-  // ========== VERIFY TOKEN VALIDITY ==========
-  Future<bool> verifyTokenValidity() async {
-    try {
-      final token = await _secureStorage.getAccessToken();
-      if (token == null) return false;
-
-      // Decodificar el token para verificar expiración
-      final tokenData = _decodeToken(token);
-      final exp = tokenData['exp'] * 1000; // Convertir a milliseconds
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // Si el token expira en menos de 5 minutos, considerarlo inválido
-      if (exp - now < 5 * 60 * 1000) {
-        // Intentar refresh
-        final newToken = await refreshAccessToken();
-        return newToken != null;
-      }
-
-      return true;
-    } catch (e) {
-      print('Token verification error: $e');
-      return false;
-    }
-  }
-
-  // ========== LOGOUT ==========
-  Future<void> logout() async {
+  // ========== UPDATE PROFILE IMAGE ==========
+  Future<User> updateProfileImage(File imageFile) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
+      final userId = await _secureStorage.getUserId();
 
-      // Opcional: notificar al backend del logout
-      if (token != null) {
-        await _client.post(
-          Uri.parse('${Environment.users}/logout'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({
-            'refreshToken': refreshToken,
-          }),
-        );
+      if (token == null || refreshToken == null || userId == null) {
+        throw Exception('Usuario no autenticado');
       }
+
+      // Crear la solicitud multipart
+      var request = http.MultipartRequest(
+        'PATCH',
+        Uri.parse('${Environment.users}/image/$userId'),
+      );
+
+      // Agregar headers de autorización
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['x-refresh-token'] = refreshToken;
+
+      // Agregar archivo de imagen
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image_user',
+          imageFile.path,
+          filename: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      );
+
+      print('📤 Enviando imagen: ${imageFile.path}');
+
+      var response = await request.send();
+      var responseData = await http.Response.fromStream(response);
+
+      print('🔄 Respuesta del servidor: ${response.statusCode}');
+      print('📄 Body de respuesta: ${responseData.body}');
+
+      // Verificar si hay nuevo token en los headers
+      final newAccessToken = response.headers['x-new-access-token'];
+      if (newAccessToken != null) {
+        await _secureStorage.setAccessToken(newAccessToken);
+      }
+
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(responseData.body);
+        if (decodedData['success'] == true) {
+          return await getUserProfile();
+        } else {
+          throw Exception(decodedData['message'] ?? 'Error al actualizar imagen');
+        }
+      } else if (response.statusCode == 401) {
+        await _secureStorage.clearAllData();
+        throw Exception('Sesión expirada');
+      } else {
+        final errorData = jsonDecode(responseData.body);
+        throw Exception(errorData['message'] ?? 'Error al actualizar imagen: ${response.statusCode}');
+      }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
     } catch (e) {
-      print('Logout error: $e');
-    } finally {
-      // Siempre limpiar datos locales
-      await _secureStorage.clearAllData();
+      print('❌ Update image error: $e');
+      rethrow;
     }
+  }
+
+  // ========== UPDATE USER PASSWORD ==========
+  Future<ResponseDefault> updateUserPassword({
+    required String oldPassword,
+    required String newPassword,
+    required String repeatedPassword,
+  }) async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
+      final userId = await _secureStorage.getUserId();
+
+      if (token == null || refreshToken == null || userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      final response = await _client.patch(
+        Uri.parse('${Environment.users}/update-password/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken,
+        },
+        body: jsonEncode({
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+          'repeatedPassword': repeatedPassword,
+        }),
+      );
+
+      print('Update Password Status: ${response.statusCode}');
+      print('Update Password Response: ${response.body}');
+
+      final newAccessToken = response.headers['x-new-access-token'];
+
+      if (newAccessToken != null) {
+        await _secureStorage.setAccessToken(newAccessToken);
+      }
+
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        if (decodedData['success'] == true) {
+          return ResponseDefault(
+            resp: true,
+            msg: decodedData['data']['message'] ?? 'Contraseña actualizada correctamente',
+          );
+        } else {
+          throw Exception(decodedData['message'] ?? 'Error al actualizar contraseña');
+        }
+      } else if (response.statusCode == 401) {
+        await _secureStorage.clearAllData();
+        throw Exception('Sesión expirada');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error al actualizar contraseña');
+      }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
+    } catch (e) {
+      print('Update password error: $e');
+      rethrow;
+    }
+  }
+
+  // ========== DELETE USER ==========
+  Future<ResponseDefault> deleteUser() async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      final userId = await _secureStorage.getUserId();
+
+      if (token == null || userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      final response = await _client.delete(
+        Uri.parse('${Environment.users}/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Delete User Status: ${response.statusCode}');
+      print('Delete User Response: ${response.body}');
+
+      final newAccessToken = response.headers['x-new-access-token'];
+
+      if (newAccessToken != null) {
+        await _secureStorage.setAccessToken(newAccessToken);
+      }
+
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        // Limpiar datos locales después de eliminar cuenta
+        await _secureStorage.clearAllData();
+        return ResponseDefault(
+          resp: true,
+          msg: 'Usuario eliminado exitosamente',
+        );
+      } else if (response.statusCode == 401) {
+        await _secureStorage.clearAllData();
+        throw Exception('Sesión expirada');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error al eliminar usuario');
+      }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
+    } catch (e) {
+      print('Delete user error: $e');
+      rethrow;
+    }
+  }
+
+  // ========== GET IMAGE URL ==========
+  String getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      print('🖼️ Image path is null or empty');
+      return '';
+    }
+
+    // Si ya es una URL completa
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    // Si es solo el nombre del archivo (como se almacena ahora)
+    if (!imagePath.contains('/')) {
+      final url = '${Environment.baseUrl}/uploads/profile/$imagePath';
+      print('🔗 URL construida: $url');
+      return url;
+    }
+
+    // Si incluye parte de la ruta pero no la base URL
+    final cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    final url = '${Environment.baseUrl}/$cleanPath';
+    print('🔗 URL construida (con ruta): $url');
+    return url;
   }
 
   void dispose() {

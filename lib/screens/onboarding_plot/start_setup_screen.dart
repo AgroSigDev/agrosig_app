@@ -6,7 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import '../../data/local_secure/secure_storage.dart';
 import '../../domain/services/firebase_service/google_services.dart';
-import '../../domain/services/user_services/user_services.dart';
+import '../../domain/services/auth_services/auth_services.dart';
 import '../auth/views/sign_in_screen.dart';
 
 class StarSetupScreen extends StatefulWidget {
@@ -18,7 +18,7 @@ class StarSetupScreen extends StatefulWidget {
 
 class _StarSetupScreen extends State<StarSetupScreen> {
   final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
-  final UserServices _userServices = UserServices();
+  final AuthServices _userServices = AuthServices();
 
 
   @override
