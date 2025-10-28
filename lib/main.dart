@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:agrosig/screens/into/into_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,6 +17,9 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  HttpOverrides.global = MyHttpOverrides();
+
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform
@@ -22,6 +27,17 @@ void main() async {
   runApp(
       ProviderScope(child: MyApp())
   );
+}
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        print('🔓 Ignorando certificado autofirmado para: $host:$port');
+        return true; // Aceptar certificados autofirmados
+      };
+  }
 }
 
 class MyApp extends ConsumerWidget {
