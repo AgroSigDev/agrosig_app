@@ -56,6 +56,22 @@ class SecureStorageAgroSig {
     return isLoggedIn;
   }
 
+  Future<void> setPolicyAccepted(bool accepted) async {
+    await _storage.write(key: 'policy_accepted', value: accepted.toString());
+    print('SecureStorage - Policy accepted: $accepted');
+  }
+
+  Future<bool> isPolicyAccepted() async {
+    try {
+      final accepted = await _storage.read(key: 'policy_accepted');
+      print('SecureStorage - Reading policy_accepted: $accepted');
+      return accepted == 'true';
+    } catch (e) {
+      print('Error reading policy acceptance: $e');
+      return false;
+    }
+  }
+
   // Limpiar todos los datos (logout)
   Future<void> clearAllData() async {
     await _storage.delete(key: 'access_token');

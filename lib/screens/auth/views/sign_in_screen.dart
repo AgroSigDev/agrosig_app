@@ -9,7 +9,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../components/animations/animation_route.dart';
 import '../../../components/custom/text_custom.dart';
 import '../../../components/forms/form_fiel.dart';
-import '../../../components/helper/error_message.dart';
 import '../../../components/helper/validate_form.dart';
 import '../../../components/theme/colors_agrosig.dart';
 import '../../../components/toast/toats.dart';
@@ -144,7 +143,6 @@ class _SignInScreenState extends State<SignInScreen> {
               isPassword: true,
               validator: passwordValidator,
             ),
-            const SizedBox(height: 20.0),
             _buildLoginButton(),
             const SizedBox(height: 10.0),
             _buildGoogleSignInButton(),

@@ -114,7 +114,6 @@ class AuthServices {
         if (decodedData['success'] == true) {
           final responseLogin = ResponseLogin.fromJson(decodedData);
 
-          // ✅ CORREGIDO: Guardar tokens en SecureStorage
           await _secureStorage.persistUserData(
             responseLogin.token,
             responseLogin.refreshToken,
@@ -130,11 +129,6 @@ class AuthServices {
           final savedToken = await _secureStorage.getAccessToken();
           final savedRefreshToken = await _secureStorage.getRefreshToken();
           final savedUserId = await _secureStorage.getUserId();
-
-          print('=== VERIFICATION ===');
-          print('Saved Token: ${savedToken != null ? "✅ EXISTS" : "❌ NULL"}');
-          print('Saved Refresh Token: ${savedRefreshToken != null ? "✅ EXISTS" : "❌ NULL"}');
-          print('Saved User ID: $savedUserId');
 
           return responseLogin;
         } else {
