@@ -14,6 +14,8 @@ import '../../../components/theme/colors_agrosig.dart';
 import '../../../components/toast/toats.dart';
 import '../../../data/local_secure/secure_storage.dart';
 import '../../../domain/services/auth_services/auth_services.dart';
+import '../../settings/privacy_policy_screen.dart';
+import '../../settings/terms_conditions_screen.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -26,12 +28,13 @@ class _SignUpPageState extends State<SignUpPage> {
   late TextEditingController _maternalSurnameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
-
   XFile? _selectedImage;
 
   final _keyForm = GlobalKey<FormState>();
-
   final secureStorage = SecureStorageAgroSig();
+
+  bool isSigningUp = false;
+  bool _isTermsAccepted = false; // 👈 Nuevo campo para checkbox
 
   @override
   void initState() {
@@ -61,10 +64,9 @@ class _SignUpPageState extends State<SignUpPage> {
     _passwordController.clear();
     setState(() {
       _selectedImage = null;
+      _isTermsAccepted = false;
     });
   }
-
-  bool isSigningUp = false;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +89,7 @@ class _SignUpPageState extends State<SignUpPage> {
         elevation: 0,
         leadingWidth: 70,
         title: TextCustom(
-          text: "Create a Account",
+          text: "Create Account",
           color: ColorsAgrosig.primaryColor,
           fontSize: 18,
         ),
@@ -140,8 +142,7 @@ class _SignUpPageState extends State<SignUpPage> {
             FormFieldAgro(
               controller: _paternalSurnameController,
               hintText: 'Enter your paternal surname',
-              validator: RequiredValidator(
-                  errorText: 'Paternal surname is required'),
+              validator: RequiredValidator(errorText: 'Paternal surname is required'),
             ),
             const SizedBox(height: 15.0),
             const TextCustom(text: 'Maternal Surname'),
@@ -149,8 +150,7 @@ class _SignUpPageState extends State<SignUpPage> {
             FormFieldAgro(
               controller: _maternalSurnameController,
               hintText: 'Enter your maternal surname',
-              validator: RequiredValidator(
-                  errorText: 'Maternal surname is required'),
+              validator: RequiredValidator(errorText: 'Maternal surname is required'),
             ),
             const SizedBox(height: 15.0),
             const TextCustom(text: 'Email'),
@@ -170,7 +170,58 @@ class _SignUpPageState extends State<SignUpPage> {
               isPassword: true,
               validator: passwordValidator,
             ),
-            const SizedBox(height: 30.0),
+            const SizedBox(height: 20.0),
+
+            // 👇 Checkbox de Términos y Política
+            Row(
+              children: [
+                Checkbox(
+                  value: _isTermsAccepted,
+                  activeColor: ColorsAgrosig.primaryColor,
+                  shape: const CircleBorder(),
+                  onChanged: (value) {
+                    setState(() {
+                      _isTermsAccepted = value ?? false;
+                    });
+                  },
+                ),
+                Expanded(
+                  child: Wrap(
+                    children: [
+                      const Text(
+                        'He leído y acepto los ',
+                        style: TextStyle(fontSize: 13.5),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.to(() => const TermsAndConditionsScreen()),
+                        child: const Text(
+                          'Términos y Condiciones',
+                          style: TextStyle(
+                            color: ColorsAgrosig.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ),
+                      const Text(' y la '),
+                      GestureDetector(
+                        onTap: () => Get.to(() => const PrivacyPolicyScreen()),
+                        child: const Text(
+                          'Política de Privacidad',
+                          style: TextStyle(
+                            color: ColorsAgrosig.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20.0),
+
             _buildRegisterButton(),
           ],
         ),
@@ -191,7 +242,7 @@ class _SignUpPageState extends State<SignUpPage> {
         child: Center(
           child: isSigningUp
               ? CircularProgressIndicator(color: Colors.white)
-              : Text(
+              : const Text(
             "Register",
             style: TextStyle(
               color: Colors.white,
@@ -206,6 +257,11 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<void> _registerUser() async {
     if (!_keyForm.currentState!.validate()) {
       showToast(message: 'Por favor, completa todos los campos correctamente');
+      return;
+    }
+
+    if (!_isTermsAccepted) {
+      showToast(message: 'Debes aceptar los Términos y Condiciones para continuar');
       return;
     }
 
@@ -233,15 +289,16 @@ class _SignUpPageState extends State<SignUpPage> {
             ? response.msg
             : 'Usuario registrado exitosamente');
 
-        modalSuccess(context, response.msg.isNotEmpty
-            ? response.msg
-            : 'Usuario registrado exitosamente', () {
-          Get.offAll(() => SignInScreen());
-          clearForm();
-        });
+        modalSuccess(
+          context,
+          response.msg.isNotEmpty ? response.msg : 'Usuario registrado exitosamente',
+              () {
+            Get.offAll(() => SignInScreen());
+            clearForm();
+          },
+        );
       } else {
         showToast(message: response.msg);
-
         _handleRegistrationError(response.msg);
       }
     } catch (e) {
@@ -259,9 +316,7 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _handleRegistrationError(String errorMessage) {
-    // Mostrar snackbar además del toast
     errorMessageSnack(context, errorMessage);
-
     if (errorMessage.toLowerCase().contains('email') ||
         errorMessage.toLowerCase().contains('usuario') ||
         errorMessage.toLowerCase().contains('exist') ||
@@ -279,7 +334,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
 class _PictureRegistre extends StatefulWidget {
   final Function(XFile?) onImageSelected;
-
   const _PictureRegistre({Key? key, required this.onImageSelected}) : super(key: key);
 
   @override
@@ -296,7 +350,6 @@ class _PictureRegistreState extends State<_PictureRegistre> {
       setState(() {
         _imageFile = pickedFile;
       });
-
       widget.onImageSelected(_imageFile);
     }
   }
@@ -324,7 +377,7 @@ class _PictureRegistreState extends State<_PictureRegistre> {
               : null,
         ),
         child: _imageFile == null
-            ? Icon(Icons.camera_alt, color: Colors.grey, size: 50)
+            ? const Icon(Icons.camera_alt, color: Colors.grey, size: 50)
             : null,
       ),
     );

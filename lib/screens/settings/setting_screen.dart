@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:agrosig/domain/services/user_services/user_services.dart';
 import 'package:agrosig/screens/settings/edit_parcel_screen.dart';
 import 'package:agrosig/screens/settings/help_screen.dart';
+import 'package:agrosig/screens/settings/privacy_policy_screen.dart';
 import 'package:agrosig/screens/settings/terms_conditions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -595,6 +596,15 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               children: [
                 Divider(height: 1, color: Colors.grey.shade100),
+                ItemAccount(
+                    text: 'Política de Privacidad',
+                    icon: Icons.lock_outline_rounded,
+                    colorIcon: 0xFF6F767E,
+                    onPressed: () => Navigator.push(
+                        context,
+                        routeAgroSig(page: PrivacyPolicyScreen())
+                    )
+                ),
                 ItemAccount(
                   text: 'Términos y condiciones',
                   icon: Icons.description_outlined,

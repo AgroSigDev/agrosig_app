@@ -23,12 +23,12 @@ class SettingPlotScreen extends StatefulWidget {
 class _SettingPlotScreenState extends State<SettingPlotScreen> {
   late TextEditingController _nameController;
   late TextEditingController _areaController;
-  late TextEditingController _locationController; // ← Nuevo controller para ubicación
+  late TextEditingController _locationController;
   final _keyForm = GlobalKey<FormState>();
 
   LatLng? _selectedLocation;
   String _coordinatesText = 'Select location on map';
-  String _address = ''; // ← Dirección obtenida por geocodificación
+  String _address = '';
   bool _isLoading = false;
   bool _isGettingAddress = false;
 
