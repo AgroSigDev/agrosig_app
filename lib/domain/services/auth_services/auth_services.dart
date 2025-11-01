@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:agrosig/data/core/custom_http_client.dart';
+import 'package:agrosig/domain/services/notifications_services/firebase_messaging_service.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
@@ -255,6 +256,9 @@ class AuthServices {
           return ResponseDefault.fromJson(jsonDecode(response.body));
         }
       }
+
+      await FirebaseMessagingService().unregisterTokenOnLogout();
+      await SecureStorageAgroSig().clearAllData();
 
       // Si falla el logout del backend, igual limpiamos localmente
       return ResponseDefault(resp: true, msg: 'Logout exitoso');

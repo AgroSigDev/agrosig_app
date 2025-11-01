@@ -1,3 +1,5 @@
+import 'package:agrosig/data/local_secure/secure_storage.dart';
+import 'package:agrosig/domain/services/notifications_services/firebase_messaging_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../components/toast/toats.dart';
@@ -78,6 +80,8 @@ class FirebaseAuthService {
 
   // Método para cerrar sesión
   Future<void> signOut() async {
+    await FirebaseMessagingService().unregisterTokenOnLogout();
+    await SecureStorageAgroSig().clearAllData();
     await _auth.signOut();
     await _googleSignIn.signOut();
   }

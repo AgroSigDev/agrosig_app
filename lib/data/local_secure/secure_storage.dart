@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class SecureStorageAgroSig {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  static const String _fcmTokenKey  = 'fmc_token';
+
   Future<void> persistUserData(String accessToken, String refreshToken, int userId) async {
     await _storage.write(key: 'access_token', value: accessToken);
     await _storage.write(key: 'refresh_token', value: refreshToken);
@@ -70,6 +72,18 @@ class SecureStorageAgroSig {
       print('Error reading policy acceptance: $e');
       return false;
     }
+  }
+
+  Future<void> setFCMToken(String token) async {
+    await _storage.write(key: _fcmTokenKey, value: token);
+  }
+
+  Future<String?> getFCMToken() async {
+    return await _storage.read(key: _fcmTokenKey);
+  }
+
+  Future<void> removeFCMToken() async {
+    await _storage.delete(key: _fcmTokenKey);
   }
 
   // Limpiar todos los datos (logout)

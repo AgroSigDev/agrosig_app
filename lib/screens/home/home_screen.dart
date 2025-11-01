@@ -1,5 +1,6 @@
 import 'package:agrosig/components/widgets/widget_view_carrusel.dart';
 import 'package:agrosig/screens/gemeni_ia/ia_onbording_screen.dart';
+import 'package:agrosig/screens/notifications/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/boton/btn_navbar.dart';
@@ -36,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final cropId = ref.read(selectedCropIdProvider);
         return ActivitysScreen(cropId: cropId);
       case 2:
-        return const Center(child: Text('Página de Notificaciones', style: TextStyle(fontSize: 24)));
+        return const NotificationsScreen();
       case 3:
         return const SettingsPage();
       default:
@@ -48,7 +49,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        LocationHeader(),
+        LocationHeader(
+          onNotificationTap: () {
+            _onNavItemTapped(2);
+          },
+        ),
         const SizedBox(height: 20),
         WeatherCard(),
         const SizedBox(height: 16),
@@ -61,7 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         WeeklySummaryWidget(),
         const SizedBox(height: 24),
         MonthlyProgressWidget(),
-        const SizedBox(height: 24), // Espacio extra al final para mejor scroll
+        const SizedBox(height: 24),
       ],
     );
   }

@@ -30,20 +30,32 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _animationController.stop(); // Detener animación primero
     _animationController.dispose();
     super.dispose();
   }
 
   Future<void> _loadWeatherData() async {
     try {
+      // Verificar si el widget está montado
+      if (!mounted) return;
+
       setState(() {
         _isLoading = true;
         _hasError = false;
       });
 
       final plot = await _plotServices.getPlotByUserId();
+
+      // Verificar después de await
+      if (!mounted) return;
+
       if (plot != null) {
         final climateResponse = await _climateServices.getWeather(plot.plot_id);
+
+        // Verificar después de await
+        if (!mounted) return;
+
         if (climateResponse.success && climateResponse.data != null) {
           setState(() {
             _currentClimate = climateResponse.data;
@@ -57,6 +69,10 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
       }
     } catch (e) {
       print('Error loading weather: $e');
+
+      // Verificar antes de mostrar error
+      if (!mounted) return;
+
       setState(() {
         _hasError = true;
         _isLoading = false;
@@ -64,7 +80,6 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
     }
   }
 
-  // Mapeo mejorado para animaciones Lottie
   String _getWeatherAnimation(String description) {
     final desc = description.toLowerCase();
 
@@ -87,7 +102,6 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
     }
   }
 
-  // Colores de fondo basados en el clima
   List<Color> _getBackgroundGradient(String description) {
     final desc = description.toLowerCase();
 
@@ -206,12 +220,10 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
 
     return Column(
       children: [
-        // Fila principal: Temperatura + Icono Animado (modificado)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Temperatura grande (se mantiene igual)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -241,13 +253,11 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
                 ),
               ],
             ),
-
-            // Icono animado del clima - CENTRADO Y MÁS GRANDE
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 100, // Más grande
+                  width: 100,
                   height: 100,
                   child: Lottie.asset(
                     _getWeatherAnimation(_currentClimate!.description),
@@ -259,10 +269,7 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
             ),
           ],
         ),
-
         SizedBox(height: 20),
-
-        // Métricas del clima con diseño mejorado
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -294,10 +301,7 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
             ],
           ),
         ),
-
         SizedBox(height: 16),
-
-        // Fila inferior: Ubicación y Actualizar
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
