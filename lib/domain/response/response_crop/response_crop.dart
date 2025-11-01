@@ -88,4 +88,44 @@ class PaginationInfo {
       hasPrev: json['has_prev'] ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'current_page': currentPage,
+      'per_page': perPage,
+      'total': total,
+      'total_pages': totalPages,
+      'has_next': hasNext,
+      'has_prev': hasPrev,
+    };
+  }
+
+  PaginationInfo copyWith({
+    int? currentPage,
+    int? perPage,
+    int? total,
+    int? totalPages,
+    bool? hasNext,
+    bool? hasPrev,
+  }) {
+    return PaginationInfo(
+      currentPage: currentPage ?? this.currentPage,
+      perPage: perPage ?? this.perPage,
+      total: total ?? this.total,
+      totalPages: totalPages ?? this.totalPages,
+      hasNext: hasNext ?? this.hasNext,
+      hasPrev: hasPrev ?? this.hasPrev,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'PaginationInfo('
+        'page: $currentPage/$totalPages, '
+        'perPage: $perPage, '
+        'total: $total, '
+        'hasNext: $hasNext, '
+        'hasPrev: $hasPrev'
+        ')';
+  }
 }

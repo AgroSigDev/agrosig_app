@@ -83,8 +83,8 @@ class PlotServices {
         throw Exception('Authentication required');
       }
 
-      // Obtener las coordenadas para conseguir el plot_id
-      final coordsResponse = await _client.get(
+      // Usar directamente el endpoint de coordenadas que ya tiene los datos completos
+      final response = await _client.get(
         Uri.parse('${Environment.plots}/ubication-plot/$userId'),
         headers: {
           'Content-Type': 'application/json',
@@ -94,39 +94,26 @@ class PlotServices {
         },
       );
 
-      print('Get Coordinates Status: ${coordsResponse.statusCode}');
-      print('Get Coordinates Response: ${coordsResponse.body}');
+      print('Get Plot Status: ${response.statusCode}');
+      print('Get Plot Response: ${response.body}');
 
-      if (coordsResponse.statusCode == 200) {
-        final coordsData = jsonDecode(coordsResponse.body);
-        if (coordsData['data'] != null && coordsData['data'].isNotEmpty) {
-          final plotId = coordsData['data'][0]['plot_id'];
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
 
-          // obtener los datos de la parcela
-          final response = await _client.get(
-            Uri.parse('${Environment.plots}/get-plot/$plotId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-              'x-refresh-token': refreshToken,
-            },
-          );
+        // Verificar si hay datos y si es una lista no vacía
+        if (decodedData['data'] != null &&
+            decodedData['data'] is List &&
+            decodedData['data'].isNotEmpty) {
 
-          print('Get Plot Status: ${response.statusCode}');
-          print('Get Plot Response: ${response.body}');
-
-          if (response.statusCode == 200) {
-            final decodedData = jsonDecode(response.body);
-            if (decodedData['data'] != null) {
-              return Plot.fromJson(decodedData['data']);
-            }
-          }
+          // Usar el primer elemento de la lista
+          return Plot.fromJson(decodedData['data'][0]);
+        } else {
+          print('No plots found for user');
+          return null;
         }
-        return null;
       } else {
-        final errorData = jsonDecode(coordsResponse.body);
-        throw Exception(errorData['message'] ?? 'Error fetching plot coordinates');
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error fetching plot data');
       }
     } on SocketException {
       throw Exception('Error de conexión: No hay internet');

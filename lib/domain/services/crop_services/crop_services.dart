@@ -31,7 +31,7 @@ class CropService {
           'Authorization': 'Bearer $token',
           'x-refresh-token': refreshToken,
         },
-        body: jsonEncode(crop.toCreateJson()), // CORREGIDO: sin llaves extras
+        body: jsonEncode(crop.toCreateJson()),
       );
 
       print('Crop Status: ${response.statusCode}');

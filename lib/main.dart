@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:agrosig/domain/services/notifications_services/firebase_messaging_service.dart';
 import 'package:agrosig/screens/into/into_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,9 +21,12 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
-  );
+
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform
+    );
+    await FirebaseMessagingService().initialize();
+  
   runApp(
       ProviderScope(child: MyApp())
   );
@@ -35,7 +38,7 @@ class MyHttpOverrides extends HttpOverrides {
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         print('🔓 Ignorando certificado autofirmado para: $host:$port');
-        return true; // Aceptar certificados autofirmados
+        return true;
       };
   }
 }

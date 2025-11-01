@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:agrosig/domain/services/notifications_services/firebase_messaging_service.dart';
 import 'package:agrosig/screens/auth/views/sing_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -27,6 +28,7 @@ class _SignInScreenState extends State<SignInScreen> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
 
+  final FirebaseMessagingService _fmcService = FirebaseMessagingService();
   final _keyForm = GlobalKey<FormState>();
 
   @override
@@ -52,6 +54,15 @@ class _SignInScreenState extends State<SignInScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   bool isSigning = false;
+
+  // Metodo para registrar token FMC despues del login
+  Future<void> _registerFMCTokenAfterLogin() async {
+    try {
+      await _fmcService.registerTokenAfterLogin();
+    } catch (e) {
+      print('Error registrando token FMC despues del login: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +261,9 @@ class _SignInScreenState extends State<SignInScreen> {
         if (token == null || refreshToken == null || userId == null) {
           throw Exception('Error: Los tokens no se guardaron correctamente');
         }
+
+        // Registrar token FMC
+        await _registerFMCTokenAfterLogin();
 
         // Obtener el perfil del usuario para verificar si tiene parcela configurada
         final userProfile = response.user;
