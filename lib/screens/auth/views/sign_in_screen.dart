@@ -60,13 +60,16 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       await _fmcService.registerTokenAfterLogin();
     } catch (e) {
-      print('Error registrando token FMC despues del login: $e');
+      print('Error registrando token FMC después del login: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: InkWell(
           onTap: () {
@@ -75,33 +78,43 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Container(
             alignment: Alignment.center,
             child: const TextCustom(
-              text: 'Register',
+              text: 'Registrarse',
               color: ColorsAgrosig.primaryColor,
               fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        leadingWidth: 70,
+        leadingWidth: 85,
         title: TextCustom(
-          text: "Sign In",
+          text: "Iniciar Sesión",
           color: ColorsAgrosig.primaryColor,
-          fontSize: 18,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
         ),
         centerTitle: true,
         actions: [
           InkWell(
             onTap: isSigning ? null : _signInWithEmailPassword,
             child: Container(
-              margin: const EdgeInsets.only(right: 10.0),
+              margin: const EdgeInsets.only(right: 15.0),
               alignment: Alignment.center,
               child: isSigning
-                  ? CircularProgressIndicator(color: ColorsAgrosig.primaryColor)
-                  : const TextCustom(
-                text: 'Login',
+                  ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: ColorsAgrosig.primaryColor,
+                ),
+              )
+                  : TextCustom(
+                text: 'Entrar',
                 color: ColorsAgrosig.primaryColor,
                 fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
           )
@@ -111,62 +124,158 @@ class _SignInScreenState extends State<SignInScreen> {
         key: _keyForm,
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
           children: [
             const SizedBox(height: 20.0),
-            Image.asset('assets/images/logo.png', height: 150),
-            const SizedBox(height: 30.0),
+
+            // Logo centrado
+            Container(
+              height: 160,
+              child: Image.asset(
+                'assets/images/logo_agrosig.png',
+                height: 160,
+                fit: BoxFit.contain,
+              ),
+            ),
+
+            const SizedBox(height: 25.0),
+
+            // Título de bienvenida
             Container(
               alignment: Alignment.center,
-              child: const TextCustom(
-                text: 'Welcome back!',
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-                color: Color(0xff14222E),
+              child: Column(
+                children: [
+                  TextCustom(
+                    text: '¡Bienvenido!',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff14222E),
+                  ),
+                  const SizedBox(height: 8),
+                  TextCustom(
+                    text: 'Ingresa a tu cuenta de AgroSig',
+                    textAlign: TextAlign.center,
+                    color: Colors.grey[600]!,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 5.0),
-            const Align(
-              alignment: Alignment.center,
-              child: TextCustom(
-                text: 'Use your credentials below and login to your account.',
-                textAlign: TextAlign.center,
-                color: Colors.grey,
-                maxLine: 2,
-                fontSize: 16,
-              ),
+
+            const SizedBox(height: 40.0),
+
+            // Campo de Email
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Correo Electrónico',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _emailController,
+                  hintText: 'ejemplo@agrosig.com',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: validatedEmail,
+                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[500]),
+                ),
+              ],
             ),
-            const SizedBox(height: 50.0),
-            const TextCustom(text: 'Email Address'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _emailController,
-              hintText: 'email@agrosig.com',
-              keyboardType: TextInputType.emailAddress,
-              validator: validatedEmail,
-            ),
+
             const SizedBox(height: 20.0),
-            const TextCustom(text: 'Password'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _passwordController,
-              hintText: '********',
-              isPassword: true,
-              validator: passwordValidator,
+
+            // Campo de Contraseña
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Contraseña',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _passwordController,
+                  hintText: '••••••••',
+                  isPassword: true,
+                  validator: passwordValidator,
+                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[500]),
+                ),
+              ],
             ),
+
+            const SizedBox(height: 25.0),
+
+            // Botón de Login
             _buildLoginButton(),
-            const SizedBox(height: 10.0),
+
+            const SizedBox(height: 20.0),
+
+            // Separador
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey[300])),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: TextCustom(
+                    text: 'o continuar con',
+                    color: Colors.grey[500]!,
+                    fontSize: 14,
+                  ),
+                ),
+                Expanded(child: Divider(color: Colors.grey[300])),
+              ],
+            ),
+
+            const SizedBox(height: 20.0),
+
+            // Botón de Google
             _buildGoogleSignInButton(),
-            const SizedBox(height: 10.0),
+
+            const SizedBox(height: 25.0),
+
+            // Olvidé contraseña
             Align(
-              alignment: Alignment.centerRight,
+              alignment: Alignment.center,
               child: InkWell(
                 onTap: () => Navigator.push(context, routeAgroSig(page: ResetPassword())),
                 child: TextCustom(
-                  text: 'Forgot Password?',
-                  fontSize: 17,
+                  text: '¿Olvidaste tu contraseña?',
+                  fontSize: 16,
                   color: ColorsAgrosig.primaryColor,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 20.0),
+
+            // Información de seguridad
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColorsAgrosig.primaryColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: ColorsAgrosig.primaryColor.withOpacity(0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.security_rounded, color: ColorsAgrosig.primaryColor, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextCustom(
+                      text: 'Tus datos están protegidos con encriptación de última generación',
+                      color: Colors.grey[600]!,
+                      fontSize: 12,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -176,23 +285,52 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildLoginButton() {
-    return GestureDetector(
-      onTap: isSigning ? null : _signInWithEmailPassword,
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: double.infinity,
-        height: 45,
+        height: 52,
         decoration: BoxDecoration(
           color: ColorsAgrosig.primaryColor,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: ColorsAgrosig.primaryColor.withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
-        child: Center(
-          child: isSigning
-              ? CircularProgressIndicator(color: Colors.white)
-              : Text(
-            "Login",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: isSigning ? null : _signInWithEmailPassword,
+            child: Center(
+              child: isSigning
+                  ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.login_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Iniciar Sesión",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -201,26 +339,28 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildGoogleSignInButton() {
-    return GestureDetector(
-      onTap: isSigning ? null : _signInWithGoogle,
-      child: Container(
-        width: double.infinity,
-        height: 45,
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: isSigning ? null : _signInWithGoogle,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(FontAwesomeIcons.google, color: Colors.white),
-              SizedBox(width: 5),
+              Icon(FontAwesomeIcons.google, color: Colors.red, size: 18),
+              const SizedBox(width: 10),
               Text(
-                "Sign in with Google",
+                "Continuar con Google",
                 style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -244,19 +384,17 @@ class _SignInScreenState extends State<SignInScreen> {
     String password = _passwordController.text.trim();
 
     try {
-
       final response = await authServices.loginUser(
           email: email,
           password: password
       );
 
       if (response.resp == true || response.msg.toLowerCase().contains('éxito') || response.msg.toLowerCase().contains('success')) {
-        showToast(message: 'Bienvenido a AgroSig');
+        showToast(message: '¡Bienvenido a AgroSig!');
 
         final token = await secureStorage.getAccessToken();
         final refreshToken = await secureStorage.getRefreshToken();
         final userId = await secureStorage.getUserId();
-
 
         if (token == null || refreshToken == null || userId == null) {
           throw Exception('Error: Los tokens no se guardaron correctamente');
@@ -315,17 +453,18 @@ class _SignInScreenState extends State<SignInScreen> {
           final User? user = authResult.user;
 
           if (user != null) {
-            showToast(message: "Signed in with Google successfully");
+            showToast(message: "Inicio de sesión con Google exitoso");
             // Aquí podrías integrar con tu backend para registrar/login con Google
             // Por ahora redirigimos a HomeScreen
             Get.offAll(() => HomeScreen());
           } else {
-            showToast(message: "Error signing in with Google");
+            showToast(message: "Error al iniciar sesión con Google");
           }
         }
       }
     } catch (error) {
-      print("Error signing in with Google: $error");
+      print("Error al iniciar sesión con Google: $error");
+      showToast(message: "Error al iniciar sesión con Google");
     }
   }
 }

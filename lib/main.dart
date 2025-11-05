@@ -22,11 +22,11 @@ void main() async {
 
   await dotenv.load(fileName: ".env");
 
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform
-    );
-    await FirebaseMessagingService().initialize();
-  
+  await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform
+  );
+  await FirebaseMessagingService().initialize();
+
   runApp(
       ProviderScope(child: MyApp())
   );
