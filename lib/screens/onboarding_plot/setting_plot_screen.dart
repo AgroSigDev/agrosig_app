@@ -199,7 +199,7 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: TextCustom(
-          text: "Configurar tu finca",
+          text: "Configurar tu Parcela",
           color: ColorsAgrosig.titleLight,
           fontSize: 23,
           fontWeight: FontWeight.w600,
@@ -516,29 +516,61 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
 
         if (_address.isNotEmpty && !_isGettingAddress) ...[
           SizedBox(height: 12),
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 16),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Dirección detectada: $_address',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.green.shade800,
-                      fontStyle: FontStyle.italic,
+          if (_address != 'No se pudo obtener la dirección') ...[
+            // ✅ Dirección detectada correctamente
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dirección detectada: $_address',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.green.shade800,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            // 🟣 No se pudo detectar la dirección (mostrar en morado)
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.deepPurple, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'No fue posible detectar la ubicación automáticamente. '
+                          'Por favor ingresa la dirección manualmente. '
+                          'Esto puede deberse a problemas de conexión a Internet o GPS.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.deepPurple.shade700,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ],
     );

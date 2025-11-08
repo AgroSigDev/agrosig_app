@@ -27,11 +27,15 @@ void modalPictureRegister({
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const TextCustom(text: 'Change profile picture', fontWeight: FontWeight.w500),
+              const TextCustom(
+                text: 'Seleccionar foto de perfil',
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
               const SizedBox(height: 15),
               ListTile(
-                leading: Icon(Icons.photo, color: Colors.blue),
-                title: Text('Choose from gallery'),
+                leading: Icon(Icons.photo_library, color: Colors.blue),
+                title: Text('Elegir de la galería'),
                 onTap: () {
                   Navigator.pop(context);
                   onPressedChange?.call();
@@ -39,11 +43,19 @@ void modalPictureRegister({
               ),
               ListTile(
                 leading: Icon(Icons.camera_alt, color: Colors.green),
-                title: Text('Take a photo'),
+                title: Text('Tomar una foto'),
                 onTap: () {
                   Navigator.pop(context);
                   onPressedTake?.call();
                 },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: TextCustom(
+                  text: 'Cancelar',
+                  color: Colors.grey,
+                ),
               ),
             ],
           ),
@@ -52,6 +64,3 @@ void modalPictureRegister({
     ),
   );
 }
-
-
-

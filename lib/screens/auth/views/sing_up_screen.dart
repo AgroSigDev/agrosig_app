@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../components/custom/text_custom.dart';
 import '../../../components/forms/form_fiel.dart';
 import '../../../components/helper/error_message.dart';
@@ -35,6 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   bool isSigningUp = false;
   bool _isTermsAccepted = false;
+  bool _permissionsGranted = false;
 
   @override
   void initState() {
@@ -43,6 +45,7 @@ class _SignUpPageState extends State<SignUpPage> {
     _maternalSurnameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _requestPermissions();
     super.initState();
   }
 
@@ -66,6 +69,73 @@ class _SignUpPageState extends State<SignUpPage> {
       _selectedImage = null;
       _isTermsAccepted = false;
     });
+  }
+
+  // Función para solicitar permisos
+  Future<void> _requestPermissions() async {
+    try {
+      // Solicitar permisos de cámara
+      final cameraStatus = await Permission.camera.request();
+
+      // Solicitar permisos de almacenamiento
+      final storageStatus = await Permission.storage.request();
+
+      // En Android 13+ (API 33+) necesitamos también permisos de fotos
+      final photosStatus = await Permission.photos.request();
+
+      setState(() {
+        _permissionsGranted = cameraStatus.isGranted &&
+            (storageStatus.isGranted || photosStatus.isGranted);
+      });
+
+      if (!_permissionsGranted) {
+        _showPermissionDialog();
+      }
+    } catch (e) {
+      print('Error al solicitar permisos: $e');
+      _showPermissionDialog();
+    }
+  }
+
+  // Diálogo para guiar al usuario a habilitar permisos manualmente
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: TextCustom(
+            text: 'Permisos Requeridos',
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+          content: TextCustom(
+            text: 'La aplicación necesita acceso a la cámara y galería para funcionar correctamente. Por favor, habilita los permisos en la configuración de tu dispositivo.',
+            fontSize: 14,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: TextCustom(
+                text: 'Cancelar',
+                color: Colors.grey,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: TextCustom(
+                text: 'Abrir Configuración',
+                color: ColorsAgrosig.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -141,6 +211,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     _selectedImage = image;
                   });
                 },
+                permissionsGranted: _permissionsGranted,
+                onPermissionsNeeded: _showPermissionDialog,
               ),
             ),
 
@@ -530,7 +602,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
 class _PictureRegistre extends StatefulWidget {
   final Function(XFile?) onImageSelected;
-  const _PictureRegistre({Key? key, required this.onImageSelected}) : super(key: key);
+  final bool permissionsGranted;
+  final VoidCallback onPermissionsNeeded;
+
+  const _PictureRegistre({
+    Key? key,
+    required this.onImageSelected,
+    required this.permissionsGranted,
+    required this.onPermissionsNeeded,
+  }) : super(key: key);
 
   @override
   _PictureRegistreState createState() => _PictureRegistreState();
@@ -541,84 +621,136 @@ class _PictureRegistreState extends State<_PictureRegistre> {
   XFile? _imageFile;
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = pickedFile;
-      });
-      widget.onImageSelected(_imageFile);
+    // Verificar si los permisos están concedidos
+    if (!widget.permissionsGranted) {
+      widget.onPermissionsNeeded();
+      return;
     }
+
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+        widget.onImageSelected(_imageFile);
+      }
+    } catch (e) {
+      print('Error al seleccionar imagen: $e');
+      _showErrorSnackbar('Error al seleccionar la imagen');
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: TextCustom(text: message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _handleImageSelection() {
+    modalPictureRegister(
+      ctx: context,
+      onPressedChange: () => _pickImage(ImageSource.gallery),
+      onPressedTake: () => _pickImage(ImageSource.camera),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Stack(
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: ColorsAgrosig.primaryColor.withOpacity(0.3),
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: _imageFile != null
-                    ? Image.file(
-                  File(_imageFile!.path),
-                  fit: BoxFit.cover,
-                )
-                    : Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.grey[400],
-                    size: 40,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 36,
-                height: 36,
+        // Stack con el icono de cámara
+        GestureDetector(
+          onTap: _handleImageSelection,
+          child: Stack(
+            children: [
+              Container(
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: ColorsAgrosig.primaryColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
+                  border: Border.all(
+                    color: ColorsAgrosig.primaryColor.withOpacity(0.3),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  Icons.camera_alt_rounded,
-                  color: Colors.white,
-                  size: 16,
+                child: ClipOval(
+                  child: _imageFile != null
+                      ? Image.file(
+                    File(_imageFile!.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.grey[400],
+                          size: 40,
+                        ),
+                      );
+                    },
+                  )
+                      : Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.grey[400],
+                      size: 40,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: _handleImageSelection,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: ColorsAgrosig.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
+        // Texto también clickeable
         GestureDetector(
-          onTap: () => modalPictureRegister(
-            ctx: context,
-            onPressedChange: () => _pickImage(ImageSource.gallery),
-            onPressedTake: () => _pickImage(ImageSource.camera),
-          ),
+          onTap: _handleImageSelection,
           child: Text(
             'Agregar foto de perfil',
             style: TextStyle(

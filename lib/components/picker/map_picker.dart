@@ -22,7 +22,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Select your plot location',
+          'Selecciona la ubicacion de tu parcela',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -40,7 +40,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 child: ElevatedButton.icon(
                   icon: Icon(Icons.check, size: 20),
                   label: Text(
-                    'Confirm',
+                    'Registrar',
                     style: TextStyle(fontSize: 14),
                   ),
                   onPressed: _selectedLocation != null
