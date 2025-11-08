@@ -66,6 +66,67 @@ class ActivityService {
     }
   }
 
+  // Obtener todas las actividades del usuario
+  Future<List<Activity>> getAllActivities() async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
+
+      if (token == null || refreshToken == null) {
+        throw Exception('No se encontró token de autenticación');
+      }
+
+      final response = await _client.get(
+        Uri.parse('${Environment.activity}/all'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken,
+        },
+      );
+
+      print('Get Activities Status: ${response.statusCode}');
+      print('Get Activities Response: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          final List<dynamic> activitiesJson = responseData['data'] ?? [];
+
+          final List<Activity> activities = activitiesJson.map((activityJson) {
+            try {
+              return Activity.fromJson(activityJson);
+            } catch (e) {
+              print('Error parseando actividad: $e');
+              print('Datos problemáticos: $activityJson');
+              return null;
+            }
+          }).whereType<Activity>().toList();
+
+          print('Total de actividades obtenidas: ${activities.length}');
+          return activities;
+        } else {
+          throw Exception(responseData['message'] ?? 'Error al obtener las actividades.');
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(
+          errorData['message'] ??
+              'Error al obtener actividades. Código HTTP: ${response.statusCode}',
+        );
+      }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet disponible.');
+    } on http.ClientException {
+      throw Exception('Error de conexión: No se pudo conectar al servidor.');
+    } catch (error) {
+      print('Error general al obtener todas las actividades: $error');
+      throw Exception('Error obteniendo todas las actividades: ${error.toString()}');
+    }
+  }
+
   // Obtener actividades por cultivo
   Future<List<Activity>> getActivitiesByCrop(int cropId) async {
     try {

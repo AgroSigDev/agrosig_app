@@ -34,8 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 0:
         return _buildHomeContent();
       case 1:
-        final cropId = ref.read(selectedCropIdProvider);
-        return ActivitysScreen(cropId: cropId);
+        return ActivitysScreen();
       case 2:
         return const NotificationsScreen();
       case 3:

@@ -21,7 +21,6 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final cropId = ref.watch(selectedCropIdProvider);
 
     final List<ViewCarouselItem> _carouselItems = [
       ViewCarouselItem(
@@ -40,7 +39,7 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
         title: "Actividad",
         imagePath: "assets/images/agregar_tarea.png",
         iconBgColor: Colors.grey[300]!,
-        page: ActivitysScreen(cropId: cropId), // Pasar el cropId actual
+        page: ActivitysScreen(), // Pasar el cropId actual
       ),
       ViewCarouselItem(
         title: "Producción",

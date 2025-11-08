@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../domain/models/notifications/notifications_model.dart';
-import 'enum_notification_helper.dart';
+import '../enum/enum_notification_helper.dart';
 
 extension NotificationModelExtensions on NotificationModel {
   NotificationType get notificationType {
