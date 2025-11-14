@@ -19,7 +19,6 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar actividades al inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(activityProvider.notifier).loadAllActivities();
     });
@@ -49,7 +48,6 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
     );
   }
 
-  // Método para cambiar filtro
   void _onFilterChanged(ActivityFilter filter) {
     ref.read(activityProvider.notifier).applyFilter(filter);
   }
@@ -63,19 +61,12 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header mejorado
             _buildHeader(),
             const SizedBox(height: 8),
-
-            // Selector de filtros
             _buildFilterSelector(activityState),
             const SizedBox(height: 8),
-
-            // Estadísticas rápidas
             _buildQuickStats(activityState),
             const SizedBox(height: 16),
-
-            // Lista de actividades
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),

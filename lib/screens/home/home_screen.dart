@@ -33,7 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 0:
         return _buildHomeContent();
       case 1:
-        return ActivitysScreen();
+        return const ActivitysScreen();
       case 2:
         return const NotificationsScreen();
       case 3:
@@ -57,9 +57,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         const SizedBox(height: 16),
         IAChatbotCard(),
         const SizedBox(height: 24),
-        ViewCarousel(),
+        ViewCarousel(
+          onActivitySelected: () {
+            _onNavItemTapped(1);
+          },
+        ),
         const SizedBox(height: 24),
-        TasksToDoSection(),
+        TasksToDoSection(
+          onActivitySelected: () {
+            _onNavItemTapped(1);
+          },
+        ),
         const SizedBox(height: 24),
         WeeklySummaryWidget(),
         const SizedBox(height: 24),

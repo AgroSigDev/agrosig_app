@@ -6,7 +6,12 @@ import '../../controller/provider/activity_provider.dart';
 import '../../domain/models/activitys/activitys_model.dart';
 
 class TasksToDoSection extends ConsumerStatefulWidget {
-  const TasksToDoSection({super.key});
+  final VoidCallback? onActivitySelected;
+
+  const TasksToDoSection({
+    super.key,
+    this.onActivitySelected,
+  });
 
   @override
   ConsumerState<TasksToDoSection> createState() => _TasksToDoSectionState();
@@ -61,10 +66,15 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
               ),
             ),
             GestureDetector(
-              onTap: () async {
-                await Navigator.push(context,
-                    routeAgroSig(page: ActivitysScreen()),
-                );
+              onTap: () {
+                if (widget.onActivitySelected != null) {
+                  widget.onActivitySelected!();
+                } else {
+                  Navigator.push(
+                    context,
+                    routeAgroSig(page: const ActivitysScreen()),
+                  );
+                }
               },
               child: const Text(
                 "See All",
@@ -237,24 +247,20 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
     return activityDate == today;
   }
 
-  // Método para obtener el nombre del cultivo (puedes ajustar esto según tu modelo)
+  // Método para obtener el nombre del cultivo
   String _getCropName(Activity activity) {
-    // Aquí puedes obtener el nombre real del cultivo si lo tienes en el modelo
-    // Por ahora, usaremos el cropId como referencia
     return "Cultivo ${activity.cropId}";
   }
 
   // Método para navegar a los detalles de la actividad
   void _navigateToActivityDetails(BuildContext context, Activity activity) {
-    // Aquí puedes implementar la navegación a los detalles de la actividad
-    print('Navegar a detalles de actividad: ${activity.activityId}');
-
-    // Ejemplo de navegación:
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => ActivityDetailsScreen(activity: activity),
-    //   ),
-    // );
+    if (widget.onActivitySelected != null) {
+      widget.onActivitySelected!();
+    } else {
+      Navigator.push(
+        context,
+        routeAgroSig(page: const ActivitysScreen()),
+      );
+    }
   }
 }
