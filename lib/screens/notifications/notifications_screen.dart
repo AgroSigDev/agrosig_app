@@ -6,10 +6,10 @@ import 'package:agrosig/components/toast/toats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import '../../components/dialogs/notification_detail_dialog.dart';
-import '../../data/repository/notification_repository.dart';
+import '../../domain/services/fcm_services/fcm_services.dart';
 import '../../domain/models/notifications/notifications_model.dart';
 import '../../domain/services/notifications_services/firebase_messaging_service.dart';
-// Enums para filtros
+
 enum NotificationFilter {
   all,
   unread,
@@ -24,7 +24,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final NotificationRepository _notificationRepo = NotificationRepository();
+  final FcmServices _notificationRepo = FcmServices();
   final FirebaseMessagingService _messagingService = FirebaseMessagingService();
 
   List<NotificationModel> _notifications = [];

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repository/notification_repository.dart';
+import '../../domain/services/fcm_services/fcm_services.dart';
 
 final unreadCountProvider = StateProvider<int>((ref) => 0);
 
@@ -16,7 +16,7 @@ class NotificationNotifier extends StateNotifier<int> {
 
   Future<void> loadUnreadCount() async {
     try {
-      final repository = NotificationRepository();
+      final repository = FcmServices();
       final response = await repository.getUnreadCount();
       if (response.success) {
         state = response.unreadCount;

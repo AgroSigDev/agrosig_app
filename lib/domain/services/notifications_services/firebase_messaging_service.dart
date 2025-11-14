@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import '../../../data/local_secure/secure_storage.dart';
-import '../../../data/repository/notification_repository.dart';
+import '../fcm_services/fcm_services.dart';
 import '../../../screens/notifications/notifications_screen.dart';
 import '../../models/notifications/notifications_model.dart';
 
 class FirebaseMessagingService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final NotificationRepository _notificationRepo = NotificationRepository();
+  final FcmServices _notificationRepo = FcmServices();
 
   // Local notifications
   late FlutterLocalNotificationsPlugin _localNotifications;

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/boton/btn_navbar.dart';
 import '../../components/widgets/widget_chatbot_card.dart';
 import '../../components/widgets/widget_location_header.dart';
-import '../../components/widgets/widget_mothtly_progress.dart';
 import '../../components/widgets/widget_task_secction.dart';
 import '../../components/widgets/widget_weather_card.dart';
 import '../../components/widgets/widget_weekly_summary.dart';
@@ -63,8 +62,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         TasksToDoSection(),
         const SizedBox(height: 24),
         WeeklySummaryWidget(),
-        const SizedBox(height: 24),
-        MonthlyProgressWidget(),
         const SizedBox(height: 24),
       ],
     );

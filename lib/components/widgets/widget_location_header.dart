@@ -74,30 +74,54 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            if (_isLoading)
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              const Icon(Icons.location_on_outlined, color: Colors.black54),
-            const SizedBox(width: 8),
-            Text(
-              _location,
-              style: TextStyle(
-                fontSize: 16,
-                color: _isLoading ? Colors.grey : Colors.black87,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        // Alternativa más ligera
+        Flexible(
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
             ),
-          ],
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isLoading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: Colors.green,
+                    size: 18,
+                  ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    _location,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _isLoading ? Colors.grey : Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
 
-        // Badge de notificaciones mejorado
+        const SizedBox(width: 8),
+
+        // Notificaciones
         GestureDetector(
           onTap: _handleNotificationTap,
           child: Container(
@@ -105,48 +129,34 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
             decoration: BoxDecoration(
               color: Colors.grey[50],
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey[200]!),
             ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Icon(
                   Icons.notifications_outlined,
-                  size: 24,
+                  size: 20,
                   color: Colors.grey[700],
                 ),
-                // Badge superpuesto mejorado
                 if (unreadCount > 0) ...[
                   Positioned(
-                    top: -4,
-                    right: -4,
+                    top: -2,
+                    right: -2,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFF5757), Color(0xFFC20808)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.red.withOpacity(0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                       constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
+                        minWidth: 14,
+                        minHeight: 14,
                       ),
                       child: Text(
                         unreadCount > 99 ? '99+' : unreadCount.toString(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 8,
                           fontWeight: FontWeight.bold,
                           height: 1,
                         ),

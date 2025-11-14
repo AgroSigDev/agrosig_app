@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-
 import '../../screens/activitys/activitys_screen.dart';
 import '../../screens/crop/crop_screen.dart';
 import '../../screens/production_batch/production_batch_screen.dart';
 import '../../screens/weather/weather_screen.dart';
 
-final selectedCropIdProvider = StateProvider<int>((ref) => 1); // Valor por defecto
+final selectedCropIdProvider = StateProvider<int>((ref) => 1);
 
 class ViewCarousel extends ConsumerStatefulWidget {
   const ViewCarousel({super.key});
@@ -39,7 +38,7 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
         title: "Actividad",
         imagePath: "assets/images/agregar_tarea.png",
         iconBgColor: Colors.grey[300]!,
-        page: ActivitysScreen(), // Pasar el cropId actual
+        page: ActivitysScreen(),
       ),
       ViewCarouselItem(
         title: "Producción",

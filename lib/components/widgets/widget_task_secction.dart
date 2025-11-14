@@ -1,58 +1,123 @@
+import 'package:agrosig/components/animations/animation_route.dart';
+import 'package:agrosig/screens/activitys/activitys_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../controller/provider/activity_provider.dart';
+import '../../domain/models/activitys/activitys_model.dart';
 
-class TasksToDoSection extends StatelessWidget {
+class TasksToDoSection extends ConsumerStatefulWidget {
   const TasksToDoSection({super.key});
 
   @override
+  ConsumerState<TasksToDoSection> createState() => _TasksToDoSectionState();
+}
+
+class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar actividades cuando el widget se inicializa
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(activityProvider.notifier).loadAllActivities();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final activityState = ref.watch(activityProvider);
+
+    // Filtrar actividades para los próximos 7 días
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final sevenDaysFromNow = today.add(const Duration(days: 7));
+
+    List<Activity> upcomingActivities = activityState.activities.where((activity) {
+      final activityDate = DateTime(
+        activity.date.year,
+        activity.date.month,
+        activity.date.day,
+      );
+      return !activityDate.isBefore(today) &&
+          !activityDate.isAfter(sevenDaysFromNow);
+    }).toList();
+
+    // Ordenar por fecha (más cercana primero)
+    upcomingActivities.sort((a, b) => a.date.compareTo(b.date));
+
+    // Limitar a mostrar máximo 3 actividades en el preview
+    final activitiesToShow = upcomingActivities.take(3).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               "Tasks To Do",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
-            Text(
-              "See All",
-              style: TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.w500,
+            GestureDetector(
+              onTap: () async {
+                await Navigator.push(context,
+                    routeAgroSig(page: ActivitysScreen()),
+                );
+              },
+              child: const Text(
+                "See All",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        _buildTaskItem(
-          icon: Icons.water_drop_outlined,
-          title: "Riego - Maíz Lote 3",
-          subtitle: "10:00 AM - Hoy",
-          onTap: () {
-            print('Navegar a detalles de riego');
-          },
-        ),
-        _buildTaskItem(
-          icon: Icons.eco_outlined,
-          title: "Fertilización - Trigo Lote 1",
-          subtitle: "Pendiente - Esta semana",
-          isUrgent: true,
-          onTap: () {
-            print('Navegar a detalles de fertilización');
-          },
-        ),
-        _buildTaskItem(
-          icon: Icons.bug_report_outlined,
-          title: "Control de Plagas - Tomate",
-          subtitle: "Revisar - Próximos días",
-          onTap: () {
-            print('Navegar a control de plagas');
-          },
-        ),
+
+        // Mostrar loading
+        if (activityState.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+
+        // Mostrar error
+        else if (activityState.errorMessage.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'Error: ${activityState.errorMessage}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          )
+
+        // Mostrar mensaje si no hay actividades
+        else if (activitiesToShow.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                "No hay actividades programadas para los próximos 7 días.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+
+          // Mostrar actividades
+          else
+            ...activitiesToShow.map((activity) => _buildTaskItem(
+              icon: _getIconForActivityType(activity.activityType),
+              title: "${activity.activityType} - ${_getCropName(activity)}",
+              subtitle: _formatDate(activity.date),
+              isUrgent: _isUrgent(activity.date),
+              onTap: () {
+                _navigateToActivityDetails(context, activity);
+              },
+            )).toList(),
       ],
     );
   }
@@ -121,5 +186,75 @@ class TasksToDoSection extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Método para obtener icono según el tipo de actividad
+  IconData _getIconForActivityType(String activityType) {
+    final type = activityType.toLowerCase();
+
+    if (type.contains('riego') || type.contains('water')) {
+      return Icons.water_drop_outlined;
+    } else if (type.contains('fertiliz') || type.contains('fert')) {
+      return Icons.eco_outlined;
+    } else if (type.contains('plaga') || type.contains('pest')) {
+      return Icons.bug_report_outlined;
+    } else if (type.contains('cosecha') || type.contains('harvest')) {
+      return Icons.agriculture_outlined;
+    } else if (type.contains('siembra') || type.contains('plant')) {
+      return Icons.spa_outlined;
+    } else {
+      return Icons.assignment_outlined;
+    }
+  }
+
+  // Método para formatear la fecha
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final activityDate = DateTime(date.year, date.month, date.day);
+
+    if (activityDate == today) {
+      return 'Hoy - ${_formatTime(date)}';
+    } else if (activityDate == tomorrow) {
+      return 'Mañana - ${_formatTime(date)}';
+    } else {
+      final daysDifference = activityDate.difference(today).inDays;
+      return 'En $daysDifference días - ${_formatTime(date)}';
+    }
+  }
+
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Método para determinar si una actividad es urgente (hoy)
+  bool _isUrgent(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final activityDate = DateTime(date.year, date.month, date.day);
+
+    return activityDate == today;
+  }
+
+  // Método para obtener el nombre del cultivo (puedes ajustar esto según tu modelo)
+  String _getCropName(Activity activity) {
+    // Aquí puedes obtener el nombre real del cultivo si lo tienes en el modelo
+    // Por ahora, usaremos el cropId como referencia
+    return "Cultivo ${activity.cropId}";
+  }
+
+  // Método para navegar a los detalles de la actividad
+  void _navigateToActivityDetails(BuildContext context, Activity activity) {
+    // Aquí puedes implementar la navegación a los detalles de la actividad
+    print('Navegar a detalles de actividad: ${activity.activityId}');
+
+    // Ejemplo de navegación:
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => ActivityDetailsScreen(activity: activity),
+    //   ),
+    // );
   }
 }

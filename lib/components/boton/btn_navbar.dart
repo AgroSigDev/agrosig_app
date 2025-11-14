@@ -48,7 +48,7 @@ class BottomNavBar extends ConsumerWidget {
                 child: _buildNavItem(
                   icon: Icons.list_alt_outlined,
                   activeIcon: Icons.list_alt,
-                  label: "Tareas",
+                  label: "Actividades",
                   index: 1,
                 ),
               ),

@@ -63,7 +63,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header mejorado
             _buildHeader(),
             const SizedBox(height: 8),
 

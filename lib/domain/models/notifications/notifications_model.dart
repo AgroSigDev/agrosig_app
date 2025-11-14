@@ -1,4 +1,3 @@
-// domain/models/notification/notification_model.dart
 import 'dart:convert';
 
 class NotificationModel {
