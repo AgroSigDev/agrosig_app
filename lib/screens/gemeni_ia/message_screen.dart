@@ -1,3 +1,4 @@
+import 'package:agrosig/components/animations/animation_route.dart';
 import 'package:agrosig/screens/gemeni_ia/ia_onbording_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -72,7 +73,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
         _messages.add(Message(text: response.text ?? "No response", isUser: false));
         _isLoading = false;
         _isSending = false;
-        _selectedImage = null; // Limpiar imagen después de enviar
+        _selectedImage = null;
       });
 
       _controller.clear();
@@ -129,7 +130,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             size: 20,
           ),
           onPressed: () {
-            Get.offAll(() => IAOnbording());
+            Navigator.push(context, routeAgroSig(page: IAOnbording()));
           },
         ),
         backgroundColor: Theme.of(context).colorScheme.background,
@@ -146,7 +147,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Gemini Flash 1.5',
+                  'Gemini IA',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onBackground,
                     fontWeight: FontWeight.w600,
@@ -397,7 +398,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: 'Type here...',
+                hintText: 'Escribe aquí...',
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),

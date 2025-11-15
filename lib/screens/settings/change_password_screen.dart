@@ -75,11 +75,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const TextCustom(
-          text: 'Change Password',
-          color: ColorsAgrosig.primaryColor,
-          fontSize: 18,
-        ),
         centerTitle: true,
         leadingWidth: 80,
         leading: InkWell(
@@ -93,7 +88,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 size: 17,
               ),
               TextCustom(
-                text: 'Back',
+                text: 'Volver',
                 fontSize: 17,
                 color: ColorsAgrosig.primaryColor,
               ),
@@ -113,9 +108,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
             )
                 : TextCustom(
-              text: "Change Password",
+              text: "Actualizar Contraseña",
               fontSize: 16,
-              color: Colors.amber,
+              color: Colors.green,
             ),
           ),
         ],
@@ -131,7 +126,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
               /// Contraseña actual
               const TextCustom(
-                text: 'Current Password',
+                text: 'Contraseña Actual',
                 color: ColorsAgrosig.secundaryColor,
               ),
               const SizedBox(height: 5.0),
@@ -155,7 +150,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
               /// Nueva contraseña
               const TextCustom(
-                text: 'New Password',
+                text: 'Nueva Contraseña',
                 color: ColorsAgrosig.secundaryColor,
               ),
               const SizedBox(height: 5.0),
@@ -182,7 +177,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
               /// Confirmar contraseña
               const TextCustom(
-                text: 'Confirm Password',
+                text: 'Confirmar Contraseña',
                 color: ColorsAgrosig.secundaryColor,
               ),
               const SizedBox(height: 5.0),
@@ -225,7 +220,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     ),
                   )
                       : const TextCustom(
-                    text: 'Update Password',
+                    text: 'Actualizar Contraseña',
                     fontSize: 16,
                     color: Colors.white,
                   ),

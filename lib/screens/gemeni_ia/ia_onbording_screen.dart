@@ -1,3 +1,4 @@
+import 'package:agrosig/components/animations/animation_route.dart';
 import 'package:agrosig/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +32,11 @@ class _IAOnbordingState extends ConsumerState<IAOnbording> {
             size: 20,
           ),
           onPressed: (){
-            Get.offAll(() => HomeScreen());
+            Navigator.push(
+                context,
+                routeAgroSig(page: HomeScreen()
+                )
+            );
           },
         ),
         backgroundColor: Theme.of(context).colorScheme.background,
@@ -45,12 +50,15 @@ class _IAOnbordingState extends ConsumerState<IAOnbording> {
                 Image.asset(
                   'assets/images/gpt-robot.png',
                   color: isDarkMode ? Colors.white : null,
+                  width: 24,
+                  height: 24,
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Gemini Gpt',
+                  'Asistente IA',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onBackground,
+                    fontWeight: FontWeight.w600,
                   ),
                 )
               ],
@@ -76,57 +84,87 @@ class _IAOnbordingState extends ConsumerState<IAOnbording> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Column(
               children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: ColorsAgrosig.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '¡Bienvenido!',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: ColorsAgrosig.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
-                  'Your AI Assistant',
+                  'Tu Asistente de IA',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
+                    fontSize: 28,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Using this software, you can ask questions and receive articles using artificial intelligence assistant',
+                  'Con este software, puedes hacer preguntas y recibir artículos utilizando nuestro asistente de inteligencia artificial',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    height: 1.5,
                   ),
                 )
               ],
             ),
             const SizedBox(height: 32),
-            Image.asset('assets/images/onboarding.png'),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ColorsAgrosig.primaryColor.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Image.asset(
+                'assets/images/onboarding.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+              ),
+            ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                  onPressed: (){
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MessageScreen()),
-                            (route) => false
-                    );
-                  },
+                onPressed: () {
+                  Navigator.push(
+                      context, 
+                      routeAgroSig(page: MessageScreen())
+                  );
+                },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: ColorsAgrosig.primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                    elevation: 2,
+                    elevation: 3,
+                    shadowColor: ColorsAgrosig.primaryColor.withOpacity(0.3),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Continue',
+                        'Comenzar',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -135,8 +173,8 @@ class _IAOnbordingState extends ConsumerState<IAOnbording> {
                       SizedBox(width: 12),
                       Icon(
                           Icons.arrow_forward_ios_rounded,
-                          color: ColorsAgrosig.backgroundColor,
-                          size: 20
+                          color: Colors.white,
+                          size: 18
                       )
                     ],
                   )

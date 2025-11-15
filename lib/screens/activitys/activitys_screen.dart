@@ -2,10 +2,12 @@ import 'package:agrosig/data/enum/enum_activity.dart';
 import 'package:agrosig/screens/activitys/select_crop_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../components/animations/animation_route.dart';
 import '../../controller/provider/activity_provider.dart';
 import '../../components/forms/activity_form_data.dart';
 import '../../domain/models/activitys/activitys_model.dart';
 import '../../domain/models/inputs/inputs_model.dart';
+import '../home/home_screen.dart';
 import 'add_activitys_screen.dart';
 
 class ActivitysScreen extends ConsumerStatefulWidget {
@@ -134,6 +136,17 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
         children: [
           Row(
             children: [
+              IconButton(onPressed: () {
+                Navigator.push(
+                    context,
+                    routeAgroSig(page: HomeScreen()
+                    ),
+                );
+              }, icon: const Icon(
+                Icons.arrow_back_ios,
+                color: Colors.black,
+                )
+              ),
               const SizedBox(width: 40),
               const SizedBox(width: 12),
               const Expanded(

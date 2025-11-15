@@ -1,3 +1,4 @@
+import 'package:agrosig/components/animations/animation_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../screens/gemeni_ia/ia_onbording_screen.dart';
@@ -52,9 +53,7 @@ class BottomNavBar extends ConsumerWidget {
                   index: 1,
                 ),
               ),
-              // Espacio para el botón central
               const Expanded(child: SizedBox()),
-              // Notificaciones CON BADGE
               Expanded(
                 child: _buildNotificationNavItem(unreadCount),
               ),
@@ -70,7 +69,7 @@ class BottomNavBar extends ConsumerWidget {
             ],
           ),
 
-          // Botón Central Flotante - Destacado
+          // Botón Central Flotante
           Positioned(
             left: MediaQuery.of(context).size.width / 2 - 28,
             top: 10,
@@ -78,9 +77,7 @@ class BottomNavBar extends ConsumerWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const IAOnbording(),
-                  ),
+                  routeAgroSig(page: IAOnbording())
                 );
               },
               child: Container(
