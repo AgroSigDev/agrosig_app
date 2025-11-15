@@ -58,7 +58,7 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Carrusel Views",
+              "Accesos Rápidos",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,

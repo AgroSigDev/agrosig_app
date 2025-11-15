@@ -3,6 +3,7 @@ import 'package:agrosig/screens/activitys/activitys_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controller/provider/activity_provider.dart';
+import '../../controller/provider/crop_provider.dart';
 import '../../domain/models/activitys/activitys_model.dart';
 
 class TasksToDoSection extends ConsumerStatefulWidget {
@@ -21,15 +22,17 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
   @override
   void initState() {
     super.initState();
-    // Cargar actividades cuando el widget se inicializa
+    // Cargar actividades y cultivos cuando el widget se inicializa
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(activityProvider.notifier).loadAllActivities();
+      ref.read(cropProvider.notifier).loadAllCrops();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final activityState = ref.watch(activityProvider);
+    final cropState = ref.watch(cropProvider);
 
     // Filtrar actividades para los próximos 7 días
     final now = DateTime.now();
@@ -59,7 +62,7 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              "Tasks To Do",
+              "Actividades Pendientes",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -77,7 +80,7 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
                 }
               },
               child: const Text(
-                "See All",
+                "Ver Todas",
                 style: TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w500,
@@ -88,8 +91,8 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
         ),
         const SizedBox(height: 12),
 
-        // Mostrar loading
-        if (activityState.isLoading)
+        // Mostrar loading si están cargando actividades O cultivos
+        if (activityState.isLoading || cropState.isLoading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Center(
@@ -97,7 +100,7 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
             ),
           )
 
-        // Mostrar error
+        // Mostrar error de actividades
         else if (activityState.errorMessage.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -107,27 +110,37 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
             ),
           )
 
-        // Mostrar mensaje si no hay actividades
-        else if (activitiesToShow.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
+        // Mostrar error de cultivos
+        else if (cropState.errorMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
-                "No hay actividades programadas para los próximos 7 días.",
-                style: TextStyle(color: Colors.grey),
+                'Error cargando cultivos: ${cropState.errorMessage}',
+                style: const TextStyle(color: Colors.red),
               ),
             )
 
-          // Mostrar actividades
-          else
-            ...activitiesToShow.map((activity) => _buildTaskItem(
-              icon: _getIconForActivityType(activity.activityType),
-              title: "${activity.activityType} - ${_getCropName(activity)}",
-              subtitle: _formatDate(activity.date),
-              isUrgent: _isUrgent(activity.date),
-              onTap: () {
-                _navigateToActivityDetails(context, activity);
-              },
-            )).toList(),
+          // Mostrar mensaje si no hay actividades
+          else if (activitiesToShow.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  "No hay actividades programadas para los próximos 7 días.",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+
+            // Mostrar actividades
+            else
+              ...activitiesToShow.map((activity) => _buildTaskItem(
+                icon: _getIconForActivityType(activity.activityType),
+                title: "${activity.activityType} - ${_getCropName(activity)}",
+                subtitle: _formatDate(activity.date),
+                isUrgent: _isUrgent(activity.date),
+                onTap: () {
+                  _navigateToActivityDetails(context, activity);
+                },
+              )).toList(),
       ],
     );
   }
@@ -247,9 +260,9 @@ class _TasksToDoSectionState extends ConsumerState<TasksToDoSection> {
     return activityDate == today;
   }
 
-  // Método para obtener el nombre del cultivo
+  // Método para obtener el nombre del cultivo usando el provider
   String _getCropName(Activity activity) {
-    return "Cultivo ${activity.cropId}";
+    return ref.read(cropProvider.notifier).getCropName(activity.cropId);
   }
 
   // Método para navegar a los detalles de la actividad
