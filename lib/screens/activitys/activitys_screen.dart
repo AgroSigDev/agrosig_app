@@ -1,16 +1,17 @@
+import 'package:agrosig/data/enum/enum_activity.dart';
 import 'package:agrosig/screens/activitys/select_crop_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../components/animations/animation_route.dart';
 import '../../controller/provider/activity_provider.dart';
 import '../../components/forms/activity_form_data.dart';
 import '../../domain/models/activitys/activitys_model.dart';
 import '../../domain/models/inputs/inputs_model.dart';
+import '../home/home_screen.dart';
 import 'add_activitys_screen.dart';
 
 class ActivitysScreen extends ConsumerStatefulWidget {
-  final int cropId;
-
-  const ActivitysScreen({super.key, required this.cropId});
+  const ActivitysScreen({super.key});
 
   @override
   ConsumerState<ActivitysScreen> createState() => _ActivitysScreenState();
@@ -20,14 +21,13 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar actividades al inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(activityProvider.notifier).loadActivities(widget.cropId);
+      ref.read(activityProvider.notifier).loadAllActivities();
     });
   }
 
   Future<void> _refreshActivities() async {
-    await ref.read(activityProvider.notifier).loadActivities(widget.cropId);
+    await ref.read(activityProvider.notifier).loadAllActivities();
   }
 
   void _navigateToAddActivity() {
@@ -50,6 +50,10 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
     );
   }
 
+  void _onFilterChanged(ActivityFilter filter) {
+    ref.read(activityProvider.notifier).applyFilter(filter);
+  }
+
   @override
   Widget build(BuildContext context) {
     final activityState = ref.watch(activityProvider);
@@ -59,15 +63,12 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header mejorado
             _buildHeader(),
             const SizedBox(height: 8),
-
-            // Estadísticas rápidas
+            _buildFilterSelector(activityState),
+            const SizedBox(height: 8),
             _buildQuickStats(activityState),
             const SizedBox(height: 16),
-
-            // Lista de actividades
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -75,6 +76,43 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Selector de filtros
+  Widget _buildFilterSelector(ActivityState activityState) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: ActivityFilter.values.map((filter) {
+            final isSelected = activityState.currentFilter == filter;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(filter.displayName),
+                selected: isSelected,
+                onSelected: (_) => _onFilterChanged(filter),
+                backgroundColor: Colors.white,
+                selectedColor: const Color(0xFF2E7D32).withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: isSelected ? const Color(0xFF2E7D32) : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                checkmarkColor: const Color(0xFF2E7D32),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? const Color(0xFF2E7D32) : Colors.grey[300]!,
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -98,10 +136,19 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
         children: [
           Row(
             children: [
-              // Espacio para mantener alineación (en lugar del botón de retroceso)
+              IconButton(onPressed: () {
+                Navigator.push(
+                    context,
+                    routeAgroSig(page: HomeScreen()
+                    ),
+                );
+              }, icon: const Icon(
+                Icons.arrow_back_ios,
+                color: Colors.black,
+                )
+              ),
               const SizedBox(width: 40),
               const SizedBox(width: 12),
-              // Título
               const Expanded(
                 child: Text(
                   'Actividades',
@@ -112,7 +159,6 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
                   ),
                 ),
               ),
-              // Botón de agregar
               Container(
                 width: 40,
                 height: 40,
@@ -129,7 +175,6 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          // Subtítulo
           const Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -146,14 +191,12 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
   }
 
   Widget _buildQuickStats(ActivityState activityState) {
-    final totalActivities = activityState.activities.length;
-    final totalCost = activityState.activities.fold(0.0, (sum, activity) => sum + activity.costTotal);
+    final stats = ref.read(activityProvider.notifier).calculateStats();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Tarjeta de total de actividades
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -188,7 +231,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
                       ),
                       const Spacer(),
                       Text(
-                        '$totalActivities',
+                        '${stats.totalActivities}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -210,7 +253,6 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // Tarjeta de costo total
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -245,7 +287,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
                       ),
                       const Spacer(),
                       Text(
-                        '\$${totalCost.toStringAsFixed(0)}',
+                        '\$${stats.totalCost.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -272,7 +314,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
   }
 
   Widget _buildActivityList(ActivityState activityState) {
-    if (activityState.isLoading && activityState.activities.isEmpty) {
+    if (activityState.isLoading && activityState.filteredActivities.isEmpty) {
       return _buildLoadingState();
     }
 
@@ -280,7 +322,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       return _buildErrorState(activityState.errorMessage);
     }
 
-    if (activityState.activities.isEmpty) {
+    if (activityState.filteredActivities.isEmpty) {
       return _buildEmptyState();
     }
 
@@ -290,9 +332,9 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       color: const Color(0xFF2E7D32),
       child: ListView.builder(
         padding: const EdgeInsets.only(top: 8, bottom: 24),
-        itemCount: activityState.activities.length,
+        itemCount: activityState.filteredActivities.length,
         itemBuilder: (context, index) {
-          final activity = activityState.activities[index];
+          final activity = activityState.filteredActivities[index];
           return ActivityCard(
             activity: activity,
             onTap: () => _showActivityDetails(activity),
@@ -301,6 +343,7 @@ class _ActivitysScreenState extends ConsumerState<ActivitysScreen> {
       ),
     );
   }
+
 
   Widget _buildLoadingState() {
     return Center(

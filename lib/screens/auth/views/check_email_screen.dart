@@ -13,70 +13,113 @@ class CheckEmailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                children: [
-                  const SizedBox(height: 90.0),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 50.0),
-                      height: 110,
-                      width: 110,
+              // Contenido principal
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Icono principal
+                    Container(
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                          color: ColorsAgrosig.primaryColor.withOpacity(.1),
-                          borderRadius: BorderRadius.circular(20.0)
+                        color: ColorsAgrosig.primaryColor.withOpacity(.1),
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(FontAwesomeIcons.envelopeOpenText, size: 60, color: ColorsAgrosig.primaryColor),
+                      child: const Icon(
+                          FontAwesomeIcons.envelopeOpenText,
+                          size: 70,
+                          color: ColorsAgrosig.primaryColor
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20.0),
-                  const TextCustom(text: 'Check your mail', textAlign: TextAlign.center, fontSize: 32, fontWeight: FontWeight.w500 ),
-                  const SizedBox(height: 20.0),
-                  const TextCustom(text: 'We have sent password recovery instructions to your email.', maxLine: 2, textAlign: TextAlign.center),
-                  const SizedBox(height: 40.0),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 70.0),
-                    child: BtnAgrosig(
-                      text: 'Open email app',
-                      fontWeight: FontWeight.w500,
-                      onPressed: () async {
-                        if (Platform.isAndroid) {
-                          final intent = AndroidIntent(
-                            action: 'android.intent.action.MAIN',
-                            category: 'android.intent.category.APP_EMAIL',
-                            flags: [
-                              Flag.FLAG_ACTIVITY_NEW_TASK,   // Evita que se cree una nueva instancia de la app
-                              Flag.FLAG_ACTIVITY_CLEAR_TOP, // Al volver, no crea otra pantalla encima
-                            ],
-                          );
-                          await intent.launch();
-                        }
-                      },
+                    const SizedBox(height: 40.0),
+
+                    // Título
+                    const TextCustom(
+                      text: 'Revisa tu correo',
+                      textAlign: TextAlign.center,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: ColorsAgrosig.primaryColor,
                     ),
-                  ),
-                  const SizedBox(height: 40.0),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 70.0),
-                    child: InkWell(
-                      onTap: () => Navigator.pushReplacement(context, routeAgroSig(page: SignInScreen())),
-                      child: const TextCustom(text: 'Skip, I\'ll confirm later'),
+                    const SizedBox(height: 20.0),
+
+                    // Descripción
+                    const TextCustom(
+                      text: 'Hemos enviado las instrucciones para recuperar tu contraseña a tu correo electrónico.',
+                      maxLine: 3,
+                      textAlign: TextAlign.center,
+                      fontSize: 16,
+                      color: Colors.grey,
                     ),
-                  ),
-                  const SizedBox(height: 20.0),
-                ],
+                    const SizedBox(height: 50.0),
+
+                    // Botón de abrir app de email
+                    SizedBox(
+                      width: double.infinity,
+                      child: BtnAgrosig(
+                        text: 'Abrir aplicación de correo',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        onPressed: () async {
+                          if (Platform.isAndroid) {
+                            final intent = AndroidIntent(
+                              action: 'android.intent.action.MAIN',
+                              category: 'android.intent.category.APP_EMAIL',
+                              flags: [
+                                Flag.FLAG_ACTIVITY_NEW_TASK,
+                                Flag.FLAG_ACTIVITY_CLEAR_TOP,
+                              ],
+                            );
+                            await intent.launch();
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 25.0),
+
+                    // Botón de saltar
+                    TextButton(
+                      onPressed: () => Navigator.pushReplacement(
+                          context,
+                          routeAgroSig(page: SignInScreen())
+                      ),
+                      child: const TextCustom(
+                        text: 'Omitir, confirmaré más tarde',
+                        color: ColorsAgrosig.primaryColor,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
+              // Información adicional en la parte inferior
               Container(
-                margin: const EdgeInsets.only(bottom: 15.0),
-                child: const TextCustom(
-                  text: 'Did not receive the email? Check your spam filter.',
-                  color: Colors.grey,
-                  maxLine: 2,
+                margin: const EdgeInsets.only(bottom: 30.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Column(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    SizedBox(height: 8),
+                    TextCustom(
+                      text: '¿No recibiste el correo? Revisa tu carpeta de spam o solicita otro enlace.',
+                      color: Colors.grey,
+                      maxLine: 3,
+                      textAlign: TextAlign.center,
+                      fontSize: 14,
+                    ),
+                  ],
                 ),
               ),
             ],

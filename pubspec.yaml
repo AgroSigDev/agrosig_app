@@ -110,6 +110,9 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_icons:
+  android: true
+  image_path: "assets/icons/logo_home.png"
 
 # The following section is specific to Flutter packages.
 flutter:

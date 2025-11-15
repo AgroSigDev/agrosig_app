@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../components/custom/text_custom.dart';
 import '../../../components/forms/form_fiel.dart';
 import '../../../components/helper/error_message.dart';
@@ -34,7 +35,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final secureStorage = SecureStorageAgroSig();
 
   bool isSigningUp = false;
-  bool _isTermsAccepted = false; // 👈 Nuevo campo para checkbox
+  bool _isTermsAccepted = false;
+  bool _permissionsGranted = false;
 
   @override
   void initState() {
@@ -43,6 +45,7 @@ class _SignUpPageState extends State<SignUpPage> {
     _maternalSurnameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _requestPermissions();
     super.initState();
   }
 
@@ -68,9 +71,79 @@ class _SignUpPageState extends State<SignUpPage> {
     });
   }
 
+  // Función para solicitar permisos
+  Future<void> _requestPermissions() async {
+    try {
+      // Solicitar permisos de cámara
+      final cameraStatus = await Permission.camera.request();
+
+      // Solicitar permisos de almacenamiento
+      final storageStatus = await Permission.storage.request();
+
+      // En Android 13+ (API 33+) necesitamos también permisos de fotos
+      final photosStatus = await Permission.photos.request();
+
+      setState(() {
+        _permissionsGranted = cameraStatus.isGranted &&
+            (storageStatus.isGranted || photosStatus.isGranted);
+      });
+
+      if (!_permissionsGranted) {
+        _showPermissionDialog();
+      }
+    } catch (e) {
+      print('Error al solicitar permisos: $e');
+      _showPermissionDialog();
+    }
+  }
+
+  // Diálogo para guiar al usuario a habilitar permisos manualmente
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: TextCustom(
+            text: 'Permisos Requeridos',
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+          content: TextCustom(
+            text: 'La aplicación necesita acceso a la cámara y galería para funcionar correctamente. Por favor, habilita los permisos en la configuración de tu dispositivo.',
+            fontSize: 14,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: TextCustom(
+                text: 'Cancelar',
+                color: Colors.grey,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: TextCustom(
+                text: 'Abrir Configuración',
+                color: ColorsAgrosig.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: InkWell(
           onTap: () {
@@ -79,33 +152,43 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Container(
             alignment: Alignment.center,
             child: const TextCustom(
-              text: 'Log In',
+              text: 'Iniciar Sesión',
               color: ColorsAgrosig.primaryColor,
               fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        leadingWidth: 70,
+        leadingWidth: 100,
         title: TextCustom(
-          text: "Create Account",
+          text: "Crear Cuenta",
           color: ColorsAgrosig.primaryColor,
-          fontSize: 18,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
         ),
         centerTitle: true,
         actions: [
           InkWell(
             onTap: isSigningUp ? null : _registerUser,
             child: Container(
-              margin: const EdgeInsets.only(right: 10.0),
+              margin: const EdgeInsets.only(right: 15.0),
               alignment: Alignment.center,
               child: isSigningUp
-                  ? CircularProgressIndicator(color: ColorsAgrosig.primaryColor)
-                  : const TextCustom(
-                text: 'Save',
+                  ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: ColorsAgrosig.primaryColor,
+                ),
+              )
+                  : TextCustom(
+                text: 'Guardar',
                 color: ColorsAgrosig.primaryColor,
                 fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
           )
@@ -115,9 +198,11 @@ class _SignUpPageState extends State<SignUpPage> {
         key: _keyForm,
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
           children: [
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 10.0),
+
+            // Foto de perfil
             Align(
               alignment: Alignment.center,
               child: _PictureRegistre(
@@ -126,103 +211,257 @@ class _SignUpPageState extends State<SignUpPage> {
                     _selectedImage = image;
                   });
                 },
+                permissionsGranted: _permissionsGranted,
+                onPermissionsNeeded: _showPermissionDialog,
               ),
             ),
-            const SizedBox(height: 20.0),
-            const TextCustom(text: "First Name"),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _firstNameController,
-              hintText: 'Enter your first name',
-              validator: RequiredValidator(errorText: 'First name is required'),
-            ),
-            const SizedBox(height: 15.0),
-            const TextCustom(text: 'Paternal Surname'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _paternalSurnameController,
-              hintText: 'Enter your paternal surname',
-              validator: RequiredValidator(errorText: 'Paternal surname is required'),
-            ),
-            const SizedBox(height: 15.0),
-            const TextCustom(text: 'Maternal Surname'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _maternalSurnameController,
-              hintText: 'Enter your maternal surname',
-              validator: RequiredValidator(errorText: 'Maternal surname is required'),
-            ),
-            const SizedBox(height: 15.0),
-            const TextCustom(text: 'Email'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _emailController,
-              hintText: 'email@agrosig.com',
-              keyboardType: TextInputType.emailAddress,
-              validator: validatedEmail,
-            ),
-            const SizedBox(height: 15.0),
-            const TextCustom(text: 'Password'),
-            const SizedBox(height: 5.0),
-            FormFieldAgro(
-              controller: _passwordController,
-              hintText: '********',
-              isPassword: true,
-              validator: passwordValidator,
-            ),
-            const SizedBox(height: 20.0),
 
-            // 👇 Checkbox de Términos y Política
-            Row(
-              children: [
-                Checkbox(
-                  value: _isTermsAccepted,
-                  activeColor: ColorsAgrosig.primaryColor,
-                  shape: const CircleBorder(),
-                  onChanged: (value) {
-                    setState(() {
-                      _isTermsAccepted = value ?? false;
-                    });
-                  },
-                ),
-                Expanded(
-                  child: Wrap(
-                    children: [
-                      const Text(
-                        'He leído y acepto los ',
-                        style: TextStyle(fontSize: 13.5),
-                      ),
-                      GestureDetector(
-                        onTap: () => Get.to(() => const TermsAndConditionsScreen()),
-                        child: const Text(
-                          'Términos y Condiciones',
-                          style: TextStyle(
-                            color: ColorsAgrosig.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                      ),
-                      const Text(' y la '),
-                      GestureDetector(
-                        onTap: () => Get.to(() => const PrivacyPolicyScreen()),
-                        child: const Text(
-                          'Política de Privacidad',
-                          style: TextStyle(
-                            color: ColorsAgrosig.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                      ),
-                    ],
+            const SizedBox(height: 25.0),
+
+            // Título
+            Container(
+              alignment: Alignment.center,
+              child: Column(
+                children: [
+                  TextCustom(
+                    text: 'Crea Tu Cuenta',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff14222E),
                   ),
+                  const SizedBox(height: 8),
+                  TextCustom(
+                    text: 'Completa tus datos para comenzar',
+                    textAlign: TextAlign.center,
+                    color: Colors.grey[600]!,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30.0),
+
+            // Campo Nombre
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Nombre',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _firstNameController,
+                  hintText: 'Ingresa tu nombre',
+                  validator: RequiredValidator(errorText: 'El nombre es requerido'),
+                  prefixIcon: Icon(Icons.person_outline, color: Colors.grey[500]),
                 ),
               ],
             ),
+
             const SizedBox(height: 20.0),
 
+            // Campo Apellido Paterno
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Apellido Paterno',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _paternalSurnameController,
+                  hintText: 'Ingresa tu apellido paterno',
+                  validator: RequiredValidator(errorText: 'El apellido paterno es requerido'),
+                  prefixIcon: Icon(Icons.person_outlined, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20.0),
+
+            // Campo Apellido Materno
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Apellido Materno',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _maternalSurnameController,
+                  hintText: 'Ingresa tu apellido materno',
+                  validator: RequiredValidator(errorText: 'El apellido materno es requerido'),
+                  prefixIcon: Icon(Icons.person_outlined, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20.0),
+
+            // Campo Email
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Correo Electrónico',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _emailController,
+                  hintText: 'ejemplo@agrosig.com',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: validatedEmail,
+                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20.0),
+
+            // Campo Contraseña
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextCustom(
+                  text: 'Contraseña',
+                  color: Colors.grey[800]!,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                FormFieldAgro(
+                  controller: _passwordController,
+                  hintText: '••••••••',
+                  isPassword: true,
+                  validator: passwordValidator,
+                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 25.0),
+
+            // Checkbox de Términos y Política
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: _isTermsAccepted,
+                    activeColor: ColorsAgrosig.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _isTermsAccepted = value ?? false;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Términos y Condiciones',
+                          style: TextStyle(
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          children: [
+                            Text(
+                              'He leído y acepto los ',
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            ),
+                            GestureDetector(
+                              onTap: () => Get.to(() => const TermsAndConditionsScreen()),
+                              child: Text(
+                                'Términos y Condiciones',
+                                style: TextStyle(
+                                  color: ColorsAgrosig.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              ' y la ',
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            ),
+                            GestureDetector(
+                              onTap: () => Get.to(() => const PrivacyPolicyScreen()),
+                              child: Text(
+                                'Política de Privacidad',
+                                style: TextStyle(
+                                  color: ColorsAgrosig.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25.0),
+
+            // Botón de Registro
             _buildRegisterButton(),
+
+            const SizedBox(height: 20.0),
+
+            // Información de seguridad
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColorsAgrosig.primaryColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: ColorsAgrosig.primaryColor.withOpacity(0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.security_rounded, color: ColorsAgrosig.primaryColor, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextCustom(
+                      text: 'Tus datos están protegidos y nunca serán compartidos con terceros',
+                      color: Colors.grey[600]!,
+                      fontSize: 12,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -230,23 +469,52 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _buildRegisterButton() {
-    return GestureDetector(
-      onTap: isSigningUp ? null : _registerUser,
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: double.infinity,
-        height: 45,
+        height: 52,
         decoration: BoxDecoration(
           color: ColorsAgrosig.primaryColor,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: ColorsAgrosig.primaryColor.withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
-        child: Center(
-          child: isSigningUp
-              ? CircularProgressIndicator(color: Colors.white)
-              : const Text(
-            "Register",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: isSigningUp ? null : _registerUser,
+            child: Center(
+              child: isSigningUp
+                  ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Crear Cuenta",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -334,7 +602,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
 class _PictureRegistre extends StatefulWidget {
   final Function(XFile?) onImageSelected;
-  const _PictureRegistre({Key? key, required this.onImageSelected}) : super(key: key);
+  final bool permissionsGranted;
+  final VoidCallback onPermissionsNeeded;
+
+  const _PictureRegistre({
+    Key? key,
+    required this.onImageSelected,
+    required this.permissionsGranted,
+    required this.onPermissionsNeeded,
+  }) : super(key: key);
 
   @override
   _PictureRegistreState createState() => _PictureRegistreState();
@@ -345,41 +621,146 @@ class _PictureRegistreState extends State<_PictureRegistre> {
   XFile? _imageFile;
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = pickedFile;
-      });
-      widget.onImageSelected(_imageFile);
+    // Verificar si los permisos están concedidos
+    if (!widget.permissionsGranted) {
+      widget.onPermissionsNeeded();
+      return;
     }
+
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+        widget.onImageSelected(_imageFile);
+      }
+    } catch (e) {
+      print('Error al seleccionar imagen: $e');
+      _showErrorSnackbar('Error al seleccionar la imagen');
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: TextCustom(text: message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _handleImageSelection() {
+    modalPictureRegister(
+      ctx: context,
+      onPressedChange: () => _pickImage(ImageSource.gallery),
+      onPressedTake: () => _pickImage(ImageSource.camera),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(100),
-      onTap: () => modalPictureRegister(
-        ctx: context,
-        onPressedChange: () => _pickImage(ImageSource.gallery),
-        onPressedTake: () => _pickImage(ImageSource.camera),
-      ),
-      child: Container(
-        height: 150,
-        width: 150,
-        decoration: BoxDecoration(
-          border: Border.all(style: BorderStyle.solid, color: Colors.grey[300]!),
-          shape: BoxShape.circle,
-          image: _imageFile != null
-              ? DecorationImage(
-            image: FileImage(File(_imageFile!.path)),
-            fit: BoxFit.cover,
-          )
-              : null,
+    return Column(
+      children: [
+        // Stack con el icono de cámara
+        GestureDetector(
+          onTap: _handleImageSelection,
+          child: Stack(
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: ColorsAgrosig.primaryColor.withOpacity(0.3),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: _imageFile != null
+                      ? Image.file(
+                    File(_imageFile!.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.grey[400],
+                          size: 40,
+                        ),
+                      );
+                    },
+                  )
+                      : Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.grey[400],
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: _handleImageSelection,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: ColorsAgrosig.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: _imageFile == null
-            ? const Icon(Icons.camera_alt, color: Colors.grey, size: 50)
-            : null,
-      ),
+        const SizedBox(height: 8),
+        // Texto también clickeable
+        GestureDetector(
+          onTap: _handleImageSelection,
+          child: Text(
+            'Agregar foto de perfil',
+            style: TextStyle(
+              color: ColorsAgrosig.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

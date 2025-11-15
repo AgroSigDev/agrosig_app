@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/boton/btn_navbar.dart';
 import '../../components/widgets/widget_chatbot_card.dart';
 import '../../components/widgets/widget_location_header.dart';
-import '../../components/widgets/widget_mothtly_progress.dart';
 import '../../components/widgets/widget_task_secction.dart';
 import '../../components/widgets/widget_weather_card.dart';
 import '../../components/widgets/widget_weekly_summary.dart';
@@ -34,8 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 0:
         return _buildHomeContent();
       case 1:
-        final cropId = ref.read(selectedCropIdProvider);
-        return ActivitysScreen(cropId: cropId);
+        return const ActivitysScreen();
       case 2:
         return const NotificationsScreen();
       case 3:
@@ -59,13 +57,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         const SizedBox(height: 16),
         IAChatbotCard(),
         const SizedBox(height: 24),
-        ViewCarousel(),
+        ViewCarousel(
+          onActivitySelected: () {
+            _onNavItemTapped(1);
+          },
+        ),
         const SizedBox(height: 24),
-        TasksToDoSection(),
+        TasksToDoSection(
+          onActivitySelected: () {
+            _onNavItemTapped(1);
+          },
+        ),
         const SizedBox(height: 24),
         WeeklySummaryWidget(),
-        const SizedBox(height: 24),
-        MonthlyProgressWidget(),
         const SizedBox(height: 24),
       ],
     );

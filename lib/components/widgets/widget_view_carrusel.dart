@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart';
-
 import '../../screens/activitys/activitys_screen.dart';
 import '../../screens/crop/crop_screen.dart';
 import '../../screens/production_batch/production_batch_screen.dart';
 import '../../screens/weather/weather_screen.dart';
 
-final selectedCropIdProvider = StateProvider<int>((ref) => 1); // Valor por defecto
+final selectedCropIdProvider = StateProvider<int>((ref) => 1);
 
 class ViewCarousel extends ConsumerStatefulWidget {
-  const ViewCarousel({super.key});
+  final VoidCallback? onActivitySelected;
+
+  const ViewCarousel({
+    super.key,
+    this.onActivitySelected,
+  });
 
   @override
   ConsumerState<ViewCarousel> createState() => _ViewCarouselState();
@@ -21,8 +24,6 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final cropId = ref.watch(selectedCropIdProvider);
-
     final List<ViewCarouselItem> _carouselItems = [
       ViewCarouselItem(
         title: "Meteorología",
@@ -40,7 +41,8 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
         title: "Actividad",
         imagePath: "assets/images/agregar_tarea.png",
         iconBgColor: Colors.grey[300]!,
-        page: ActivitysScreen(cropId: cropId), // Pasar el cropId actual
+        page: ActivitysScreen(),
+        isActivity: true, // Marcamos esta como actividad
       ),
       ViewCarouselItem(
         title: "Producción",
@@ -56,7 +58,7 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Carrusel Views",
+              "Accesos Rápidos",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
@@ -86,6 +88,7 @@ class _ViewCarouselState extends ConsumerState<ViewCarousel> {
                   child: ViewCarouselItemCard(
                     item: _carouselItems[index],
                     isSelected: _selectedIndex == index,
+                    onActivitySelected: widget.onActivitySelected,
                   ),
                 ),
               );
@@ -102,23 +105,27 @@ class ViewCarouselItem {
   final String imagePath;
   final Color iconBgColor;
   final Widget page;
+  final bool isActivity;
 
   ViewCarouselItem({
     required this.title,
     required this.imagePath,
     required this.iconBgColor,
     required this.page,
+    this.isActivity = false,
   });
 }
 
 class ViewCarouselItemCard extends StatefulWidget {
   final ViewCarouselItem item;
   final bool isSelected;
+  final VoidCallback? onActivitySelected;
 
   const ViewCarouselItemCard({
     super.key,
     required this.item,
     required this.isSelected,
+    this.onActivitySelected,
   });
 
   @override
@@ -156,7 +163,6 @@ class _ViewCarouselItemCardState extends State<ViewCarouselItemCard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Icono con fondo - CORREGIDO: sin color filter
             Container(
               width: 80,
               height: 80,
@@ -170,14 +176,11 @@ class _ViewCarouselItemCardState extends State<ViewCarouselItemCard> {
               child: Center(
                 child: Image.asset(
                   widget.item.imagePath,
-                  width: 50, // Un poco más grande para mejor visibilidad
+                  width: 50,
                   height: 50,
-                  // QUITAMOS la propiedad 'color' para mostrar la imagen original
                 ),
               ),
             ),
-
-            // Título
             Text(
               widget.item.title,
               style: TextStyle(
@@ -187,8 +190,6 @@ class _ViewCarouselItemCardState extends State<ViewCarouselItemCard> {
               ),
               textAlign: TextAlign.center,
             ),
-
-            // Botón Acceder
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -203,7 +204,16 @@ class _ViewCarouselItemCardState extends State<ViewCarouselItemCard> {
                   elevation: 0,
                 ),
                 onPressed: () {
-                  Get.to(() => widget.item.page);
+                  if (widget.item.isActivity && widget.onActivitySelected != null) {
+                    // Si es actividad y tenemos callback, lo usamos
+                    widget.onActivitySelected!();
+                  } else {
+                    // Para otras pantallas, navegamos normalmente
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => widget.item.page),
+                    );
+                  }
                 },
                 child: const Text(
                   'Acceder',

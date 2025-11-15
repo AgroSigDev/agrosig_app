@@ -1,19 +1,18 @@
-// repositories/notification_repository.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:agrosig/config/keys.dart';
 import 'package:agrosig/data/core/custom_http_client.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
 import 'package:http/http.dart' as http;
-import '../../domain/models/notifications/notifications_model.dart';
-import '../../domain/response/response_crop/response_crop.dart';
-import '../../domain/response/response_notification/response_notification.dart';
+import '../../models/notifications/notifications_model.dart';
+import '../../response/response_crop/response_crop.dart';
+import '../../response/response_notification/response_notification.dart';
 
-class NotificationRepository {
+class FcmServices {
   final SecureStorageAgroSig _secureStorage = SecureStorageAgroSig();
   final http.Client _client;
 
-  NotificationRepository() : _client = CustomHttpClient.create();
+  FcmServices() : _client = CustomHttpClient.create();
 
   // Registrar token FCM
   Future<NotificationResponse> registerFCMToken(String fcmToken, {String deviceType = 'mobile'}) async {

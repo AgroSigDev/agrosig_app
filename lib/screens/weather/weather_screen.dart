@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../../components/theme/colors_agroSig.dart';
 import '../../domain/models/weather/weather_daily_model.dart';
 import '../../domain/services/plot_services/plot_services.dart';
 import '../../domain/models/weather/weather_model.dart';
@@ -25,8 +26,8 @@ class _WeatherScreenState extends State<WeatherScreen>
 
   late AnimationController _sheetAnimationController;
   bool _isExpanded = false;
-  final double _minHeight = 0.3;
-  final double _maxHeight = 0.8;
+  final double _minHeight = 0.25;
+  final double _maxHeight = 0.85;
 
   @override
   void initState() {
@@ -37,7 +38,7 @@ class _WeatherScreenState extends State<WeatherScreen>
     )..repeat(reverse: true);
 
     _sheetAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
@@ -63,7 +64,7 @@ class _WeatherScreenState extends State<WeatherScreen>
   }
 
   void _handleVerticalDrag(DragUpdateDetails details) {
-    final sensitivity = 0.005;
+    final sensitivity = 0.008;
     final newHeight = (_isExpanded ? _maxHeight : _minHeight) -
         (details.primaryDelta! * sensitivity);
 
@@ -74,7 +75,7 @@ class _WeatherScreenState extends State<WeatherScreen>
   }
 
   void _handleVerticalDragEnd(DragEndDetails details) {
-    final threshold = 0.5;
+    final threshold = 0.3;
     if (_sheetAnimationController.value > threshold) {
       _sheetAnimationController.forward();
       _isExpanded = true;
@@ -143,13 +144,13 @@ class _WeatherScreenState extends State<WeatherScreen>
     if (desc.contains('soleado') || desc.contains('clear')) {
       return Icons.wb_sunny;
     } else if (desc.contains('parcialmente')) {
-      return Icons.wb_cloudy;
+      return Icons.wb_twilight;
     } else if (desc.contains('nublado') || desc.contains('cloud')) {
       return Icons.cloud;
     } else if (desc.contains('lluvia') || desc.contains('rain')) {
-      return Icons.grain;
+      return Icons.water_drop;
     } else if (desc.contains('tormenta') || desc.contains('storm')) {
-      return Icons.flash_on;
+      return Icons.thunderstorm;
     } else {
       return Icons.wb_sunny;
     }
@@ -165,14 +166,23 @@ class _WeatherScreenState extends State<WeatherScreen>
     } else if (desc.contains('tormenta') || desc.contains('storm')) {
       return Colors.deepPurple;
     } else {
-      return Colors.white70;
+      return Colors.white;
     }
   }
 
-  // Formatear fecha para mostrar como "Oct, 10"
+  // CORRECCIÓN: Formatear fecha para mostrar como "Lun, 10 Oct"
   String _formatDate(DateTime date) {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    return '${months[date.month - 1]}, ${date.day}';
+
+    int dayIndex = date.weekday - 1;
+    if (date.weekday == 7) {
+      dayIndex = 0;
+    } else {
+      dayIndex = date.weekday;
+    }
+
+    return '${days[dayIndex]}, ${date.day} ${months[date.month - 1]}';
   }
 
   // Degradado dinámico basado en el clima actual
@@ -342,7 +352,7 @@ class _WeatherScreenState extends State<WeatherScreen>
 
                 // Temperaturas mínima y máxima
                 Text(
-                  "H:${_currentClimate?.maxTemp.round()}°   L:${_currentClimate?.minTemp.round()}°",
+                  "Máx:${_currentClimate?.maxTemp.round()}°   Mín:${_currentClimate?.minTemp.round()}°",
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 16,
@@ -389,7 +399,7 @@ class _WeatherScreenState extends State<WeatherScreen>
           ),
         ),
 
-        // ---------- Contenedor inferior INTERACTIVO ----------
+        // ---------- Contenedor inferior ----------
         AnimatedBuilder(
           animation: _sheetAnimationController,
           builder: (context, child) {
@@ -403,16 +413,7 @@ class _WeatherScreenState extends State<WeatherScreen>
                 height: height,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF6046D0).withOpacity(0.9),
-                      const Color(0xFF5B2EFF).withOpacity(0.9),
-                      const Color(0xFF7846FF).withOpacity(0.9),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
+                  color: Colors.white,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(25),
                     topRight: Radius.circular(25),
@@ -420,43 +421,66 @@ class _WeatherScreenState extends State<WeatherScreen>
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
+                      blurRadius: 15,
+                      spreadRadius: 5,
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    // Indicador de deslizar
+                    // Indicador de deslizar y botón de expandir
                     Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                      padding: const EdgeInsets.only(top: 12.0, bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Indicador
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Botón de expandir
+                          GestureDetector(
+                            onTap: _toggleExpanded,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: ColorsAgrosig.primaryColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Icon(
+                                _isExpanded ? Icons.expand_less : Icons.expand_more,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
                     // Pestañas
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _TabItem(
-                            title: "Weekly Forecast",
+                            title: "Pronóstico Semanal",
                             isActive: true,
                             onTap: _toggleExpanded,
                           ),
                         ],
                       ),
                     ),
-                    const Divider(color: Colors.white24),
+                    const Divider(color: Colors.grey, height: 1),
 
-                    // Contenido de la lista - Se adapta al estado
+                    // Contenido de la lista
                     Expanded(
                       child: _isExpanded
                           ? _buildExpandedWeeklyList()
@@ -484,6 +508,7 @@ class _WeatherScreenState extends State<WeatherScreen>
           icon: _getWeatherIcon(forecast.description),
           iconColor: _getWeatherIconColor(forecast.description),
           temp: "${forecast.temperature.round()}°",
+          description: forecast.description,
         );
       },
     );
@@ -493,38 +518,31 @@ class _WeatherScreenState extends State<WeatherScreen>
     return Column(
       children: [
         // Encabezados de la tabla expandida
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Row(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            border: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
+          ),
+          child: const Row(
             children: [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Fecha',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  'Clima',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
               Expanded(
                 flex: 3,
                 child: Text(
-                  'Descripción',
+                  'Día',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  'Clima',
+                  style: TextStyle(
+                    color: Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -533,9 +551,9 @@ class _WeatherScreenState extends State<WeatherScreen>
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Precipitación',
+                  'Precip.',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -543,11 +561,11 @@ class _WeatherScreenState extends State<WeatherScreen>
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Text(
                   'Temp',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -557,23 +575,29 @@ class _WeatherScreenState extends State<WeatherScreen>
             ],
           ),
         ),
-        const Divider(color: Colors.white24, height: 1),
 
         // Lista de pronósticos
         Expanded(
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.only(bottom: 10),
             itemCount: _weeklyForecast.length,
             itemBuilder: (context, index) {
               final forecast = _weeklyForecast[index];
-              return _WeatherRowExpanded(
-                date: _formatDate(forecast.dateAt),
-                icon: _getWeatherIcon(forecast.description),
-                iconColor: _getWeatherIconColor(forecast.description),
-                temp: "${forecast.temperature.round()}°",
-                precipitation: "${forecast.precipitation.toStringAsFixed(1)} mm",
-                description: forecast.description,
+              return Container(
+                decoration: BoxDecoration(
+                  border: index < _weeklyForecast.length - 1
+                      ? const Border(bottom: BorderSide(color: Colors.grey, width: 0.3))
+                      : null,
+                ),
+                child: _WeatherRowExpanded(
+                  date: _formatDate(forecast.dateAt),
+                  icon: _getWeatherIcon(forecast.description),
+                  iconColor: _getWeatherIconColor(forecast.description),
+                  temp: "${forecast.temperature.round()}°",
+                  precipitation: "${forecast.precipitation.toStringAsFixed(1)} mm",
+                  description: forecast.description,
+                ),
               );
             },
           ),
@@ -645,8 +669,9 @@ class _TabItem extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: isActive ? Colors.white : Colors.white70,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w400,
+              color: isActive ? ColorsAgrosig.primaryColor : Colors.grey,
+              fontSize: 16,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
           if (isActive)
@@ -655,7 +680,7 @@ class _TabItem extends StatelessWidget {
               height: 3,
               width: 50,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: ColorsAgrosig.primaryColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -670,12 +695,14 @@ class _WeatherRowCompact extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String temp;
+  final String description;
 
   const _WeatherRowCompact({
     required this.date,
     required this.icon,
     required this.iconColor,
     required this.temp,
+    required this.description,
   });
 
   @override
@@ -683,16 +710,15 @@ class _WeatherRowCompact extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Fecha
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               date,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
+                color: Colors.black87,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -704,13 +730,26 @@ class _WeatherRowCompact extends StatelessWidget {
             child: Icon(icon, color: iconColor, size: 24),
           ),
 
+          // Descripción compacta
+          Expanded(
+            flex: 3,
+            child: Text(
+              _capitalizeDescription(description),
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
           // Temperatura
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Text(
               temp,
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black87,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -721,9 +760,17 @@ class _WeatherRowCompact extends StatelessWidget {
       ),
     );
   }
+
+  String _capitalizeDescription(String desc) {
+    return desc.split(' ').map((word) {
+      if (word.isNotEmpty) {
+        return word[0].toUpperCase() + word.substring(1);
+      }
+      return word;
+    }).join(' ');
+  }
 }
 
-// Versión expandida con todos los detalles
 class _WeatherRowExpanded extends StatelessWidget {
   final String date;
   final IconData icon;
@@ -743,43 +790,41 @@ class _WeatherRowExpanded extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Fecha
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               date,
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black87,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
 
-          // Icono del clima
+          // Icono y descripción
           Expanded(
-            flex: 1,
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-
-          // Descripción
-          Expanded(
-            flex: 3,
-            child: Tooltip(
-              message: _capitalizeDescription(description),
-              child: Text(
-                _capitalizeDescription(description),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
+            flex: 4,
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _capitalizeDescription(description),
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ),
           ),
 
@@ -788,9 +833,9 @@ class _WeatherRowExpanded extends StatelessWidget {
             flex: 2,
             child: Text(
               precipitation,
-              style: const TextStyle(
-                color: Colors.lightBlueAccent,
-                fontSize: 12,
+              style: TextStyle(
+                color: Colors.blue[700],
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -799,12 +844,12 @@ class _WeatherRowExpanded extends StatelessWidget {
 
           // Temperatura
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Text(
               temp,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+                color: Colors.black87,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.right,

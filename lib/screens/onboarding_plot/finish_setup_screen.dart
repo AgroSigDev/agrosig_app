@@ -22,7 +22,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
   Plot? _userPlot;
   bool _isLoading = true;
   bool _isEditing = false;
-  String _errorMessage ='';
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
       final plot = await plotServices.getPlotByUserId();
 
-      print('Plot loaded: $plot');
+      print('Parcela cargada: $plot');
 
       setState(() {
         _userPlot = plot;
@@ -58,19 +58,19 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
           _plotNameController.text = plot.plot_name;
           _locationController.text = plot.location;
           _areaController.text = plot.area.toString();
-          print('Controllers set with: ${plot.plot_name}, ${plot.location}, ${plot.area}');
+          print('Controladores configurados con: ${plot.plot_name}, ${plot.location}, ${plot.area}');
         } else {
           _errorMessage = 'No se encontró información de la parcela';
         }
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading user plot: $e');
+      print('Error cargando parcela: $e');
       setState(() {
         _errorMessage = 'Error cargando datos: ${e.toString()}';
         _isLoading = false;
       });
-      showToast(message: 'Error loading plot data');
+      showToast(message: 'Error cargando datos de la parcela');
     }
   }
 
@@ -83,7 +83,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
     if (_plotNameController.text.isEmpty ||
         _locationController.text.isEmpty ||
         _areaController.text.isEmpty) {
-      showToast(message: 'Please fill all fields');
+      showToast(message: 'Por favor completa todos los campos');
       return;
     }
 
@@ -97,7 +97,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
       final area = double.tryParse(areaText);
 
       if (area == null || area <= 0) {
-        showToast(message: 'Area must be a valid positive number');
+        showToast(message: 'El tamaño debe ser un número positivo válido');
         return;
       }
 
@@ -111,7 +111,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
       );
 
       if (response.success) {
-        modalSuccess(context, 'Plot updated successfully', () {
+        modalSuccess(context, 'Parcela actualizada exitosamente', () {
           Get.offAll(() => HomeScreen());
         });
       } else {
@@ -121,11 +121,11 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
         showToast(message: response.message);
       }
     } catch (e) {
-      print('Error updating plot: $e');
+      print('Error actualizando parcela: $e');
       setState(() {
         _errorMessage = 'Error: ${e.toString()}';
       });
-      showToast(message: 'Error updating plot: ${e.toString()}');
+      showToast(message: 'Error actualizando parcela: ${e.toString()}');
     } finally {
       setState(() {
         _isEditing = false;
@@ -150,7 +150,13 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                 valueColor: AlwaysStoppedAnimation<Color>(ColorsAgrosig.greenColor),
               ),
               SizedBox(height: 20),
-              Text('Cargando Informacion de la Parcela...')
+              Text(
+                'Cargando información de la parcela...',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 16,
+                ),
+              )
             ],
           ),
         ),
@@ -164,12 +170,30 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.red, size: 50),
+              Icon(Icons.error_outline, color: Colors.red, size: 60),
               SizedBox(height: 20),
-              Text('Error: $_errorMessage', textAlign: TextAlign.center),
-              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  'Error: $_errorMessage',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _loadUserPlot,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsAgrosig.greenColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: Text('Reintentar'),
               ),
             ],
@@ -186,16 +210,52 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Indicador de Progreso - 100%
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: LinearProgressIndicator(
+                  value: 1.0, // 100% de progreso
+                  backgroundColor: Colors.grey.shade200,
+                  color: ColorsAgrosig.greenColor,
+                  borderRadius: BorderRadius.circular(10),
+                  minHeight: 6,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Paso 3 de 3",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    "100%",
+                    style: TextStyle(
+                      color: ColorsAgrosig.greenColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 20),
+
               // Header con ícono de cerrar
               Row(
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: ColorsAgrosig.highlightLight,
+                      color: ColorsAgrosig.greenColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.close, color: ColorsAgrosig.titleLight),
+                      icon: Icon(Icons.close, color: ColorsAgrosig.greenColor, size: 20),
                       onPressed: () => Get.offAll(() => HomeScreen()),
                     ),
                   ),
@@ -205,37 +265,14 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
               const SizedBox(height: 30),
 
-              // Ícono de éxito con sombra
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: ColorsAgrosig.success,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: ColorsAgrosig.success.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
               // Título
               Text(
-                'Farm Set Up Successful!',
+                '¡Configuración Completada!',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: ColorsAgrosig.titleLight,
+                  height: 1.2,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -243,39 +280,37 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
               const SizedBox(height: 15),
 
               // Descripción
-              Text(
-                'Your farm has been successfully configured. You can review and update the details below.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: ColorsAgrosig.textLight,
-                  height: 1.5,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Tu Parcela ha sido configurada exitosamente. Puedes revisar y actualizar los detalles a continuación.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
 
               const SizedBox(height: 40),
 
-              // Tarjeta de detalles de la parcela - CON SOMBRA PRONUNCIADA
+              // Tarjeta de detalles de la parcela
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(28),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 30,
-                      offset: Offset(0, 15),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 25,
+                      offset: Offset(0, 8),
                     ),
                   ],
                   border: Border.all(
-                    color: ColorsAgrosig.highlightLight,
+                    color: Colors.grey.shade200,
                     width: 1,
                   ),
                 ),
@@ -286,20 +321,20 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                     Row(
                       children: [
                         Container(
-                          padding: EdgeInsets.all(8),
+                          padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: ColorsAgrosig.greenColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            Icons.agriculture_outlined,
+                            Icons.agriculture_rounded,
                             color: ColorsAgrosig.greenColor,
-                            size: 24,
+                            size: 26,
                           ),
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Farm Details',
+                          'Detalles de la Parcela',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -309,34 +344,34 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                       ],
                     ),
 
-                    SizedBox(height: 30),
+                    SizedBox(height: 25),
 
-                    // Campo Plot Name
+                    // Campo Nombre de la Parcela
                     _buildDetailField(
-                      label: 'Plot Name',
+                      label: 'Nombre de la Parcela',
                       icon: Icons.badge_outlined,
                       controller: _plotNameController,
-                      hintText: "ex: Michael's garden",
+                      hintText: "ej: Finca de la Familia",
                     ),
 
-                    SizedBox(height: 24),
+                    SizedBox(height: 20),
 
-                    // Campo Location
+                    // Campo Ubicación
                     _buildDetailField(
-                      label: 'Location',
+                      label: 'Ubicación',
                       icon: Icons.location_on_outlined,
                       controller: _locationController,
-                      hintText: 'Plot location',
+                      hintText: 'Ubicación de la parcela',
                     ),
 
-                    SizedBox(height: 24),
+                    SizedBox(height: 20),
 
-                    // Campo Area
+                    // Campo Tamaño
                     _buildDetailField(
-                      label: 'Area (m²)',
-                      icon: Icons.square_foot_outlined,
+                      label: 'Tamaño (m²)',
+                      icon: Icons.map_sharp,
                       controller: _areaController,
-                      hintText: 'Plot area',
+                      hintText: 'Tamaño en metros cuadrados',
                       isNumber: true,
                     ),
                   ],
@@ -345,19 +380,19 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
               SizedBox(height: 40),
 
-              // Botón Update Plot
+              // Botón Actualizar Parcela
               Container(
                 width: double.infinity,
-                height: 58,
+                height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsAgrosig.greenColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    elevation: 6,
-                    shadowColor: ColorsAgrosig.greenColor.withOpacity(0.4),
+                    elevation: 4,
+                    shadowColor: ColorsAgrosig.greenColor.withOpacity(0.3),
                   ),
                   onPressed: _isEditing ? null : _updatePlot,
                   child: _isEditing
@@ -372,10 +407,10 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                       : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.edit_outlined, size: 22),
+                      Icon(Icons.edit_rounded, size: 22),
                       SizedBox(width: 10),
                       Text(
-                        'Update Farm Details',
+                        'Actualizar Detalles',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -388,14 +423,14 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
 
               SizedBox(height: 16),
 
-              // Botón Go to Home
+              // Botón Ir al Inicio
               Container(
                 width: double.infinity,
-                height: 58,
+                height: 56,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.home_outlined, size: 22),
+                  icon: Icon(Icons.home_rounded, size: 22),
                   label: Text(
-                    'Go to Home',
+                    'Ir al Inicio',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
@@ -403,9 +438,9 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
                   ),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    side: BorderSide(color: ColorsAgrosig.greenColor, width: 2.5),
+                    side: BorderSide(color: ColorsAgrosig.greenColor, width: 2),
                     foregroundColor: ColorsAgrosig.greenColor,
                     backgroundColor: Colors.transparent,
                   ),
@@ -446,40 +481,40 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: ColorsAgrosig.titleLight,
+                color: Colors.grey.shade800,
                 fontSize: 15,
               ),
             ),
           ],
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 8),
         Container(
-          height: 54,
+          height: 52,
           child: TextField(
             controller: controller,
             keyboardType: isNumber ? TextInputType.number : TextInputType.text,
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: ColorsAgrosig.textGrey),
-              contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: ColorsAgrosig.highlightLight, width: 1.5),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: ColorsAgrosig.highlightLight, width: 1.5),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: ColorsAgrosig.greenColor, width: 2),
               ),
               filled: true,
-              fillColor: ColorsAgrosig.bgLight,
+              fillColor: Colors.grey.shade50,
             ),
             style: TextStyle(
-              fontSize: 16,
-              color: ColorsAgrosig.titleLight,
+              fontSize: 15,
+              color: Colors.grey.shade800,
               fontWeight: FontWeight.w500,
             ),
           ),

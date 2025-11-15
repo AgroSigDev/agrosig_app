@@ -27,7 +27,7 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
   final _keyForm = GlobalKey<FormState>();
 
   LatLng? _selectedLocation;
-  String _coordinatesText = 'Select location on map';
+  String _coordinatesText = 'Seleccionar ubicación en el mapa';
   String _address = '';
   bool _isLoading = false;
   bool _isGettingAddress = false;
@@ -52,7 +52,7 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      showToast(message: 'Please enable location services');
+      showToast(message: 'Por favor activa los servicios de ubicación');
       return;
     }
 
@@ -60,7 +60,7 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        showToast(message: 'Location permissions are denied');
+        showToast(message: 'Los permisos de ubicación fueron denegados');
       }
     }
   }
@@ -84,11 +84,10 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
           _isGettingAddress = true;
         });
 
-        // IMPORTANTE: Agregar await para esperar que termine
         await _getAddressFromCoordinates(selected);
       }
     } catch (e) {
-      showToast(message: 'Error getting location: ${e.toString()}');
+      showToast(message: 'Error obteniendo ubicación: ${e.toString()}');
       setState(() {
         _isGettingAddress = false;
       });
@@ -109,15 +108,13 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
       });
 
     } catch (e) {
-      print('Error getting address: $e');
+      print('Error obteniendo dirección: $e');
       setState(() {
-        _address = 'Unable to get address';
+        _address = 'No se pudo obtener la dirección';
         _locationController.text = '';
         _isGettingAddress = false;
       });
-
-      // Opcional: Mostrar mensaje al usuario
-      showToast(message: 'Could not get address automatically. Please enter it manually.');
+      showToast(message: 'No se pudo obtener la dirección automáticamente. Por favor ingrésala manualmente.');
     }
   }
 
@@ -127,25 +124,24 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
     _locationController.clear();
     setState(() {
       _selectedLocation = null;
-      _coordinatesText = 'Select location on map';
+      _coordinatesText = 'Seleccionar ubicación en el mapa';
       _address = '';
     });
   }
 
   Future<void> _savePlot() async {
     if (_selectedLocation == null) {
-      showToast(message: 'Please select a location on the map');
+      showToast(message: 'Por favor selecciona una ubicación en el mapa');
       return;
     }
 
     if (!_keyForm.currentState!.validate()) {
-      showToast(message: 'Please complete all fields');
+      showToast(message: 'Por favor completa todos los campos');
       return;
     }
 
-    // Validar que tenemos una dirección
     if (_locationController.text.trim().isEmpty) {
-      showToast(message: 'Please wait for address to load or enter location manually');
+      showToast(message: 'Por favor espera a que cargue la dirección o ingrésala manualmente');
       return;
     }
 
@@ -156,20 +152,20 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
       final area = double.tryParse(areaText);
 
       if (area == null || area <= 0) {
-        showToast(message: 'Area must be a valid positive number');
+        showToast(message: 'El tamaño debe ser un número positivo válido');
         return;
       }
 
       final response = await plotServices.registerPlot(
         plotName: _nameController.text.trim(),
-        location: _locationController.text.trim(), // ← Esta es la dirección automática
+        location: _locationController.text.trim(),
         lat: _selectedLocation!.latitude,
         long: _selectedLocation!.longitude,
         area: area,
       );
 
       if (response.success) {
-        modalSuccess(context, 'Plot registered successfully', () {
+        modalSuccess(context, 'Parcela registrada exitosamente', () {
           Get.offAll(() => FinishSetupPlot());
           _clearForm();
         });
@@ -177,7 +173,7 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
         errorMessageSnack(context, response.message);
       }
     } catch (e) {
-      print('Error in _savePlot: $e');
+      print('Error en _savePlot: $e');
       showToast(message: 'Error: ${e.toString()}');
     } finally {
       setState(() => _isLoading = false);
@@ -188,58 +184,110 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Get.offAll(() => StarSetupScreen()),
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+        leading: Container(
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: ColorsAgrosig.greenColor.withOpacity(0.1),
+          ),
+          child: IconButton(
+            onPressed: () => Get.offAll(() => StarSetupScreen()),
+            icon: Icon(Icons.arrow_back, color: ColorsAgrosig.greenColor, size: 20),
+            padding: EdgeInsets.zero,
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         title: TextCustom(
-          text: "Set up your farm",
+          text: "Configurar tu Parcela",
           color: ColorsAgrosig.titleLight,
           fontSize: 23,
+          fontWeight: FontWeight.w600,
         ),
         centerTitle: true,
       ),
       body: Form(
         key: _keyForm,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                LinearProgressIndicator(value: 0.33),
-                SizedBox(height: 20),
-                Text(
-                  "Create an account to access Fairm, and start to set up your farm and garden.",
-                  style: TextStyle(color: Colors.grey[700]),
+                // Indicador de Progreso
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: LinearProgressIndicator(
+                    value: 0.5, // 50% de progreso
+                    backgroundColor: Colors.grey.shade200,
+                    color: ColorsAgrosig.greenColor,
+                    borderRadius: BorderRadius.circular(10),
+                    minHeight: 6,
+                  ),
                 ),
-                SizedBox(height: 20.0),
-                _buildLabel("Plot Name"),
-                const SizedBox(height: 5.0),
-                FormFieldAgro(
-                  controller: _nameController,
-                  hintText: "ex: Alex's Plot",
-                  validator: RequiredValidator(errorText: 'Name is required'),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Paso 2 de 3",
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "50%",
+                      style: TextStyle(
+                        color: ColorsAgrosig.greenColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16.0),
-                _buildLocationSection(),
-                SizedBox(height: 16.0),
-                _buildLabel("Area in m²"),
-                const SizedBox(height: 5.0),
-                FormFieldAgro(
-                  controller: _areaController,
-                  hintText: 'ex: 540',
-                  keyboardType: TextInputType.number,
-                  validator: MultiValidator([
-                    RequiredValidator(errorText: 'Area is required'),
-                    PatternValidator(r'^[0-9]+(\.[0-9]+)?$',
-                        errorText: 'Enter a valid number'),
-                  ]),
+
+                SizedBox(height: 32),
+
+                // Texto de Bienvenida
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: ColorsAgrosig.greenColor.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: ColorsAgrosig.greenColor.withOpacity(0.1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.eco, color: ColorsAgrosig.greenColor, size: 24),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Rellena los datos solicitados para acceder a AgroSig y comienza a descrubir el potencial de la aplicación.",
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+
+                SizedBox(height: 32),
+
+                // Sección del Formulario
+                _buildFormSection(),
+
                 SizedBox(height: 40),
+
                 _buildSavePlotButton(),
+
+                SizedBox(height: 20),
               ],
             ),
           ),
@@ -248,13 +296,85 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-      ),
+  Widget _buildFormSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Nombre de la Parcela
+        _buildLabel("Nombre de la Parcela", Icons.agriculture_outlined),
+        SizedBox(height: 8),
+        FormFieldAgro(
+          controller: _nameController,
+          hintText: "ej: Parcela de Alex",
+          prefixIcon: Icon(Icons.agriculture_outlined, color: Colors.grey.shade500, size: 20),
+          validator: RequiredValidator(errorText: 'El nombre es requerido'),
+        ),
+
+        SizedBox(height: 24),
+
+        // Sección de Ubicación
+        _buildLocationSection(),
+
+        SizedBox(height: 24),
+
+        // Tamaño de la Parcela
+        _buildLabel("Tamaño de la Parcela (m²)", Icons.map_sharp),
+        SizedBox(height: 8),
+        FormFieldAgro(
+          controller: _areaController,
+          hintText: 'ej: 10000 (para 1 hectárea)',
+          keyboardType: TextInputType.number,
+          prefixIcon: Icon(Icons.map_sharp, color: Colors.grey.shade500, size: 20),
+          validator: MultiValidator([
+            RequiredValidator(errorText: 'El tamaño es requerido'),
+            PatternValidator(r'^[0-9]+(\.[0-9]+)?$',
+                errorText: 'Ingresa un número válido'),
+          ]),
+        ),
+
+        // Nota sobre conversión
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue.shade600, size: 16),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '1 hectárea = 10,000 m² • 1 acre = 4,047 m²',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue.shade800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLabel(String text, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: ColorsAgrosig.greenColor),
+        SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: Colors.grey.shade800,
+          ),
+        ),
+      ],
     );
   }
 
@@ -262,139 +382,249 @@ class _SettingPlotScreenState extends State<SettingPlotScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel("Location"),
-        const SizedBox(height: 5.0),
+        _buildLabel("Ubicación", Icons.location_on_outlined),
+        SizedBox(height: 12),
 
-        // Botón para seleccionar ubicación en el mapa
-        GestureDetector(
-          onTap: _selectLocation,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 13),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
-              borderRadius: BorderRadius.circular(8),
+        // Botón de Selección en Mapa
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _selectedLocation != null
+                  ? ColorsAgrosig.greenColor.withOpacity(0.3)
+                  : Colors.grey.shade300,
+              width: _selectedLocation != null ? 2 : 1,
             ),
-            child: Row(
-              children: [
-                Icon(Icons.location_on, color: ColorsAgrosig.greenColor),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Select on Map',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: ColorsAgrosig.greenColor,
-                        ),
+            color: _selectedLocation != null
+                ? ColorsAgrosig.greenColor.withOpacity(0.02)
+                : Colors.transparent,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _selectLocation,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ColorsAgrosig.greenColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                      if (_coordinatesText != 'Select location on map') ...[
-                        SizedBox(height: 4),
-                        Text(
-                          _coordinatesText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                      child: Icon(Icons.map_outlined,
+                          color: ColorsAgrosig.greenColor, size: 20),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Seleccionar en el Mapa',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: ColorsAgrosig.greenColor,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (_coordinatesText != 'Seleccionar ubicación en el mapa') ...[
+                            SizedBox(height: 4),
+                            Text(
+                              _coordinatesText,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    _isGettingAddress
+                        ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ColorsAgrosig.greenColor,
+                      ),
+                    )
+                        : Icon(Icons.arrow_forward_ios_rounded,
+                        size: 16, color: Colors.grey.shade500),
+                  ],
                 ),
-                _isGettingAddress
-                    ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : Icon(Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey.shade600),
-              ],
+              ),
             ),
           ),
         ),
 
         SizedBox(height: 16),
 
-        // Campo de texto para la dirección (se llena automáticamente)
+        // Campo de Dirección
         Text(
-          'Address',
+          'Dirección',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 14,
             color: Colors.grey.shade700,
           ),
         ),
-        SizedBox(height: 5),
+        SizedBox(height: 8),
         FormFieldAgro(
           controller: _locationController,
-          hintText: 'Address will be auto-filled from map selection',
-          validator: RequiredValidator(errorText: 'Location address is required'),
-          enabled: !_isGettingAddress, // Deshabilitar mientras se obtiene la dirección
+          hintText: 'La dirección se completará automáticamente',
+          prefixIcon: Icon(Icons.place_outlined, color: Colors.grey.shade500, size: 20),
+          validator: RequiredValidator(errorText: 'La dirección es requerida'),
+          enabled: !_isGettingAddress,
         ),
 
+        // Indicadores de Carga y Estado
         if (_isGettingAddress) ...[
-          SizedBox(height: 8),
-          Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Getting address...',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
+          SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.blue,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(width: 12),
+                Text(
+                  'Obteniendo dirección...',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
 
         if (_address.isNotEmpty && !_isGettingAddress) ...[
-          SizedBox(height: 8),
-          Text(
-            'Detected address: $_address',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.green.shade700,
-              fontStyle: FontStyle.italic,
+          SizedBox(height: 12),
+          if (_address != 'No se pudo obtener la dirección') ...[
+            // ✅ Dirección detectada correctamente
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dirección detectada: $_address',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.green.shade800,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            // 🟣 No se pudo detectar la dirección (mostrar en morado)
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.deepPurple, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'No fue posible detectar la ubicación automáticamente. '
+                          'Por favor ingresa la dirección manualmente. '
+                          'Esto puede deberse a problemas de conexión a Internet o GPS.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.deepPurple.shade700,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ],
     );
   }
 
   Widget _buildSavePlotButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: (_isLoading || _isGettingAddress) ? null : _savePlot,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: ColorsAgrosig.greenColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: ColorsAgrosig.greenColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-          elevation: 0,
-        ),
-        child: _isLoading
-            ? CircularProgressIndicator(
-          color: Colors.white,
-          strokeWidth: 2,
-        )
-            : Text(
-          'Continue',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: ElevatedButton(
+          onPressed: (_isLoading || _isGettingAddress) ? null : _savePlot,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorsAgrosig.greenColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+            padding: EdgeInsets.symmetric(horizontal: 24),
+          ),
+          child: _isLoading
+              ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
+              : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Continuar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, size: 20),
+            ],
           ),
         ),
       ),

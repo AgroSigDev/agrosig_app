@@ -73,8 +73,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           context,
           'Perfil actualizado correctamente',
               () {
-            Navigator.pop(context); // Cerrar el modal
-            Navigator.pop(context, true); // Volver a SettingsPage con resultado
+            Navigator.pop(context);
+            Navigator.pop(context, true);
           },
         );
       } catch (e) {
@@ -106,7 +106,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 size: 17,
               ),
               TextCustom(
-                text: 'Back',
+                text: 'Volver',
                 fontSize: 17,
                 color: ColorsAgrosig.primaryColor,
               ),
@@ -126,9 +126,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             )
                 : TextCustom(
-              text: "Update Account",
+              text: "Actualizar Perfil",
               fontSize: 16,
-              color: Colors.amber,
+              color: Colors.green,
             ),
           ),
         ],

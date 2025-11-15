@@ -43,7 +43,7 @@ class UserServices {
       print('Get Profile Headers: ${response.headers}');
       print('Get Profile Response: ${response.body}');
 
-      // ✅ Verificar si hay nuevo token en los headers
+      // Verificar si hay nuevo token en los headers
       final newAccessToken = response.headers['x-new-access-token'];
       if (newAccessToken != null) {
         print('Nuevo token recibido: $newAccessToken');
@@ -165,13 +165,13 @@ class UserServices {
         ),
       );
 
-      print('📤 Enviando imagen: ${imageFile.path}');
+      print('Enviando imagen: ${imageFile.path}');
 
       var response = await request.send();
       var responseData = await http.Response.fromStream(response);
 
-      print('🔄 Respuesta del servidor: ${response.statusCode}');
-      print('📄 Body de respuesta: ${responseData.body}');
+      print('Respuesta del servidor: ${response.statusCode}');
+      print('Body de respuesta: ${responseData.body}');
 
       // Verificar si hay nuevo token en los headers
       final newAccessToken = response.headers['x-new-access-token'];
@@ -196,7 +196,7 @@ class UserServices {
     } on SocketException {
       throw Exception('Error de conexión: No hay internet');
     } catch (e) {
-      print('❌ Update image error: $e');
+      print('Update image error: $e');
       rethrow;
     }
   }
@@ -318,7 +318,7 @@ class UserServices {
   // ========== GET IMAGE URL ==========
   String getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
-      print('🖼️ Image path is null or empty');
+      print('Image path is null or empty');
       return '';
     }
 
@@ -330,14 +330,14 @@ class UserServices {
     // Si es solo el nombre del archivo (como se almacena ahora)
     if (!imagePath.contains('/')) {
       final url = '${Environment.baseUrl}/uploads/profile/$imagePath';
-      print('🔗 URL construida: $url');
+      print('URL construida: $url');
       return url;
     }
 
     // Si incluye parte de la ruta pero no la base URL
     final cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
     final url = '${Environment.baseUrl}/$cleanPath';
-    print('🔗 URL construida (con ruta): $url');
+    print('URL construida (con ruta): $url');
     return url;
   }
 
