@@ -1,3 +1,4 @@
+import 'package:agrosig/components/theme/colors_agroSig.dart';
 import 'package:agrosig/components/toast/toats.dart';
 import 'package:flutter/material.dart';
 import '../../domain/models/production/production_model.dart';
@@ -179,10 +180,18 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
     final isSmallScreen = screenWidth < 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: ColorsAgrosig.bgLight,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: ColorsAgrosig.primaryColor,
+            size: 20,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        backgroundColor: ColorsAgrosig.donContainerColor,
         elevation: 1,
         title: Text(
           'Gestión de Lotes de Producción',
@@ -192,6 +201,16 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.refresh,
+              color: ColorsAgrosig.primaryColor,
+            ),
+            onPressed: _loadProductionBatches,
+            tooltip: 'Recargar datos manualmente',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -203,6 +222,7 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ENCABEZADO RESPONSIVO - IDÉNTICO AL DE CULTIVOS
                 if (isSmallScreen)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,22 +232,29 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        height: 40,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6A38C2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          // Botón Crear Lote
+                          SizedBox(
+                            height: 40,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6A38C2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: _navigateToCreateBatch,
+                              icon: const Icon(Icons.add, color: Colors.white, size: 16),
+                              label: const Text(
+                                "Crear Lote",
+                                style: TextStyle(color: Colors.white, fontSize: 14),
+                              ),
                             ),
                           ),
-                          onPressed: _navigateToCreateBatch,
-                          icon: const Icon(Icons.add, color: Colors.white, size: 16),
-                          label: const Text(
-                            "Crear Lote",
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                        ),
+                        ],
                       ),
                     ],
                   )
@@ -259,6 +286,7 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
 
                 const SizedBox(height: 24),
 
+                // CONTADOR DE REGISTROS (solo cuando hay datos)
                 if (!_isLoading && _productionBatches.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -271,6 +299,7 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
                     ),
                   ),
 
+                // ESTADOS DE LA UI
                 if (_isLoading)
                   const Expanded(
                     child: Center(
@@ -388,9 +417,11 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
                                     ),
                                   ),
                                   DataColumn(
-                                    label: Text(
-                                      "QR",
-                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    label: Center(
+                                      child: Text(
+                                        "QR",
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -424,15 +455,17 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
                                         ),
                                       ),
                                       DataCell(
-                                        InkWell(
-                                          onTap: () => _navigateToQRView(
-                                            batch.productionId,
-                                            batch.name,
-                                            batch.hasActivities,
-                                          ),
-                                          child: _buildQRIndicator(
-                                            batch.hasActivities,
-                                            batch.activityCount,
+                                        Center(
+                                          child: InkWell(
+                                            onTap: () => _navigateToQRView(
+                                              batch.productionId,
+                                              batch.name,
+                                              batch.hasActivities,
+                                            ),
+                                            child: _buildQRIndicator(
+                                              batch.hasActivities,
+                                              batch.activityCount,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -446,46 +479,51 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
                       ),
                     ),
 
+                const SizedBox(height: 20),
+
+                // PAGINACIÓN MEJORADA - IDÉNTICA A LA DE CULTIVOS
                 if (!_isLoading && _productionBatches.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, size: 18),
-                          onPressed: _currentPage > 1
-                              ? () {
-                            setState(() {
-                              _currentPage--;
-                            });
-                            _loadProductionBatches();
-                          }
-                              : null,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios, size: 18),
+                            onPressed: _currentPage > 1
+                                ? () {
+                              setState(() {
+                                _currentPage--;
+                              });
+                              _loadProductionBatches();
+                            }
+                                : null,
                           ),
-                          child: Text(
-                            'Página $_currentPage de $_totalPages',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'Página $_currentPage de $_totalPages',
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios, size: 18),
-                          onPressed: _currentPage < _totalPages
-                              ? () {
-                            setState(() {
-                              _currentPage++;
-                            });
-                            _loadProductionBatches();
-                          }
-                              : null,
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                            onPressed: _currentPage < _totalPages
+                                ? () {
+                              setState(() {
+                                _currentPage++;
+                              });
+                              _loadProductionBatches();
+                            }
+                                : null,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -493,6 +531,7 @@ class _ProductionBatchScreenState extends State<ProductionBatchScreen> {
           ),
         ),
       ),
+      // BOTÓN FLOTANTE SOLO PARA MÓVIL
       floatingActionButton: isSmallScreen
           ? FloatingActionButton(
         onPressed: _navigateToCreateBatch,
