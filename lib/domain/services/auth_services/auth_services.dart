@@ -241,21 +241,25 @@ class AuthServices {
   Future<ResponseDefault> logout() async {
     try {
       final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
 
-      if (token != null) {
+      if (token != null || refreshToken != null) {
+        throw Exception('Usuario no autenticado');
+      }
         final response = await _client.post(
           Uri.parse('${Environment.auth}/logout'),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Authorization': 'Bearer $token'
+            'Authorization': 'Bearer $token',
+            'x-refresh-token': '$refreshToken',
           },
         );
 
         if (response.statusCode == 200) {
           return ResponseDefault.fromJson(jsonDecode(response.body));
         }
-      }
+
 
       await FirebaseMessagingService().unregisterTokenOnLogout();
       await SecureStorageAgroSig().clearAllData();

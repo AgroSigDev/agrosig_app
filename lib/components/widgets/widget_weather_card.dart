@@ -45,7 +45,7 @@ class _WeatherCardState extends State<WeatherCard> with SingleTickerProviderStat
         _hasError = false;
       });
 
-      final plot = await _plotServices.getPlotByUserId();
+      final plot = await _plotServices.getUbicationPlot();
 
       // Verificar después de await
       if (!mounted) return;

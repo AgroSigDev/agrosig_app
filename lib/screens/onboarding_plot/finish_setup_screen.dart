@@ -48,7 +48,7 @@ class _FinishSetupPlotState extends State<FinishSetupPlot> {
         _errorMessage = '';
       });
 
-      final plot = await plotServices.getPlotByUserId();
+      final plot = await plotServices.getUbicationPlot();
 
       print('Parcela cargada: $plot');
 

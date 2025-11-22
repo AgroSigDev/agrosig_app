@@ -269,18 +269,20 @@ class UserServices {
   Future<ResponseDefault> deleteUser() async {
     try {
       final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
-      if (token == null || userId == null) {
+      if (token == null || refreshToken == null || userId == null) {
         throw Exception('Usuario no autenticado');
       }
 
       final response = await _client.delete(
-        Uri.parse('${Environment.users}/$userId'),
+        Uri.parse('${Environment.users}/delete-user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken
         },
       );
 
