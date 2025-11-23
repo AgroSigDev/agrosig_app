@@ -19,18 +19,16 @@ class UserServices {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
-      final userId = await _secureStorage.getUserId();
 
       print('Token: $token');
       print('RefreshToken: $refreshToken');
-      print('UserID: $userId');
 
-      if (token == null || refreshToken == null || userId == null) {
+      if (token == null || refreshToken == null) {
         throw Exception('Usuario no autenticado');
       }
 
       final response = await _client.get(
-        Uri.parse('${Environment.users}/get-user/$userId'),
+        Uri.parse('${Environment.users}/profile/me'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -58,7 +56,6 @@ class UserServices {
           throw Exception(decodedData['message'] ?? 'Error al obtener perfil');
         }
       } else if (response.statusCode == 401) {
-        // Si llega aquí, significa que ambos tokens fallaron
         await _secureStorage.clearAllData();
         throw Exception('Sesión expirada, por favor inicie sesión nuevamente');
       } else if (response.statusCode == 404) {
@@ -85,14 +82,13 @@ class UserServices {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
-      final userId = await _secureStorage.getUserId();
 
-      if (token == null || refreshToken == null || userId == null) {
+      if (token == null || refreshToken == null) {
         throw Exception('Usuario no autenticado');
       }
 
       final response = await _client.patch(
-        Uri.parse('${Environment.users}/update-profile/$userId'),
+        Uri.parse('${Environment.users}/profile/me'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -108,7 +104,6 @@ class UserServices {
       );
 
       final newAccessToken = response.headers['x-new-access-token'];
-
       if (newAccessToken != null) {
         await _secureStorage.setAccessToken(newAccessToken);
       }
@@ -140,16 +135,15 @@ class UserServices {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
-      final userId = await _secureStorage.getUserId();
 
-      if (token == null || refreshToken == null || userId == null) {
+      if (token == null || refreshToken == null) {
         throw Exception('Usuario no autenticado');
       }
 
       // Crear la solicitud multipart
       var request = http.MultipartRequest(
         'PATCH',
-        Uri.parse('${Environment.users}/image/$userId'),
+        Uri.parse('${Environment.users}/image/me'),
       );
 
       // Agregar headers de autorización
@@ -182,6 +176,7 @@ class UserServices {
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(responseData.body);
         if (decodedData['success'] == true) {
+          // La respuesta incluye la URL de la imagen
           return await getUserProfile();
         } else {
           throw Exception(decodedData['message'] ?? 'Error al actualizar imagen');
@@ -210,14 +205,13 @@ class UserServices {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
-      final userId = await _secureStorage.getUserId();
 
-      if (token == null || refreshToken == null || userId == null) {
+      if (token == null || refreshToken == null) {
         throw Exception('Usuario no autenticado');
       }
 
       final response = await _client.patch(
-        Uri.parse('${Environment.users}/update-password/$userId'),
+        Uri.parse('${Environment.users}/password/me'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -235,7 +229,6 @@ class UserServices {
       print('Update Password Response: ${response.body}');
 
       final newAccessToken = response.headers['x-new-access-token'];
-
       if (newAccessToken != null) {
         await _secureStorage.setAccessToken(newAccessToken);
       }
@@ -290,13 +283,11 @@ class UserServices {
       print('Delete User Response: ${response.body}');
 
       final newAccessToken = response.headers['x-new-access-token'];
-
       if (newAccessToken != null) {
         await _secureStorage.setAccessToken(newAccessToken);
       }
 
       if (response.statusCode == 204 || response.statusCode == 200) {
-        // Limpiar datos locales después de eliminar cuenta
         await _secureStorage.clearAllData();
         return ResponseDefault(
           resp: true,
@@ -305,6 +296,8 @@ class UserServices {
       } else if (response.statusCode == 401) {
         await _secureStorage.clearAllData();
         throw Exception('Sesión expirada');
+      } else if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para realizar esta acción');
       } else {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData['message'] ?? 'Error al eliminar usuario');
