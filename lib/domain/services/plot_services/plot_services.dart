@@ -73,7 +73,7 @@ class PlotServices {
   }
 
   // ========== GET PLOT BY USER ID ==========
-  Future<Plot?> getPlotByUserId() async {
+  Future<Plot?> getUbicationPlot() async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -85,7 +85,7 @@ class PlotServices {
 
       // Usar directamente el endpoint de coordenadas que ya tiene los datos completos
       final response = await _client.get(
-        Uri.parse('${Environment.plots}/ubication-plot/$userId'),
+        Uri.parse('${Environment.plots}/ubication-plot/'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -135,7 +135,7 @@ class PlotServices {
       }
 
       final response = await _client.get(
-        Uri.parse('${Environment.plots}/ubication-plot/$userId'),
+        Uri.parse('${Environment.plots}/ubication-plot/'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -186,7 +186,7 @@ class PlotServices {
       print('Area: $area');
 
       final response = await _client.patch(
-        Uri.parse('${Environment.plots}/update/$plotId'),
+        Uri.parse('${Environment.plots}/update-plot/$plotId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -223,18 +223,20 @@ class PlotServices {
   Future<ResponseDefault> deletePlot(int plotId) async {
     try {
       final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
-      if (token == null || userId == null) {
+      if (token == null || refreshToken == null || userId == null) {
         throw Exception('Authentication required');
       }
 
       final response = await _client.delete(
-        Uri.parse('${Environment.plots}/plots/delete/$plotId'),
+        Uri.parse('${Environment.plots}/delete/$plotId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken
         },
       );
 

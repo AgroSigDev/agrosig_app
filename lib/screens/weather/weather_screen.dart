@@ -92,7 +92,7 @@ class _WeatherScreenState extends State<WeatherScreen>
         _hasError = false;
       });
 
-      final plot = await _plotServices.getPlotByUserId();
+      final plot = await _plotServices.getUbicationPlot();
       if (plot != null) {
         final climateResponse = await _climateServices.getWeather(plot.plot_id);
         final weeklyResponse = await _climateServices.getWeeklyWeather(plot.plot_id);

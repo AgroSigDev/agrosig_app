@@ -76,7 +76,7 @@ class _EditParcelScreenState extends State<EditParcelScreen> {
         _errorMessage = '';
       });
 
-      final plot = await _plotServices.getPlotByUserId();
+      final plot = await _plotServices.getUbicationPlot();
 
       print('Plot loaded: $plot');
 

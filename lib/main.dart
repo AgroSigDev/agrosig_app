@@ -18,8 +18,6 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  HttpOverrides.global = MyHttpOverrides();
-
   await dotenv.load(fileName: ".env");
 
   await Firebase.initializeApp(
@@ -30,17 +28,6 @@ void main() async {
   runApp(
       ProviderScope(child: MyApp())
   );
-}
-
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        print('🔓 Ignorando certificado autofirmado para: $host:$port');
-        return true;
-      };
-  }
 }
 
 class MyApp extends ConsumerWidget {
