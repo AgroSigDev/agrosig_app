@@ -30,47 +30,77 @@ class AuthServices {
       String password,
       ) async {
     try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${Environment.auth}/register'),
-      );
+      // Si no hay imagen, enviar como JSON normal
+      if (imagePath == null) {
+        final response = await _client.post(
+          Uri.parse('${Environment.auth}/register'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'first_name': firstName,
+            'paternal_surname': paternalSurname,
+            'maternal_surname': maternalSurname,
+            'email': email,
+            'password': password,
+          }),
+        );
 
-      // Campos que espera tu backend
-      request.fields['first_name'] = firstName;
-      request.fields['paternal_surname'] = paternalSurname;
-      request.fields['maternal_surname'] = maternalSurname;
-      request.fields['email'] = email;
-      request.fields['password'] = password;
+        print('Register Status: ${response.statusCode}');
+        print('Register Response: ${response.body}');
 
-      // Imagen opcional
-      if (imagePath != null) {
+        if (response.statusCode == 201) {
+          final decodedData = jsonDecode(response.body);
+          return ResponseDefault(
+            resp: true,
+            msg: decodedData['message'] ?? 'Usuario registrado exitosamente',
+          );
+        } else {
+          final errorData = jsonDecode(response.body);
+          return ResponseDefault(
+            resp: false,
+            msg: errorData['message'] ?? 'Error en el registro',
+          );
+        }
+      } else {
+        // Si hay imagen, usar multipart (como lo tienes actualmente)
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${Environment.auth}/register'),
+        );
+
+        request.fields['first_name'] = firstName;
+        request.fields['paternal_surname'] = paternalSurname;
+        request.fields['maternal_surname'] = maternalSurname;
+        request.fields['email'] = email;
+        request.fields['password'] = password;
+
         request.files.add(
           await http.MultipartFile.fromPath(
             'image_user',
             imagePath,
           ),
         );
-      }
 
-      var response = await request.send();
-      var responseData = await http.Response.fromStream(response);
+        var response = await request.send();
+        var responseData = await http.Response.fromStream(response);
 
-      print('Register Status: ${response.statusCode}');
-      print('Register Response: ${responseData.body}');
+        print('Register Status: ${response.statusCode}');
+        print('Register Response: ${responseData.body}');
 
-      if (response.statusCode == 201) {
-        final decodedData = jsonDecode(responseData.body);
-
-        return ResponseDefault(
-          resp: true,
-          msg: decodedData['message'] ?? 'Usuario registrado exitosamente',
-        );
-      } else {
-        final errorData = jsonDecode(responseData.body);
-        return ResponseDefault(
-          resp: false,
-          msg: errorData['message'] ?? 'Error en el registro',
-        );
+        if (response.statusCode == 201) {
+          final decodedData = jsonDecode(responseData.body);
+          return ResponseDefault(
+            resp: true,
+            msg: decodedData['message'] ?? 'Usuario registrado exitosamente',
+          );
+        } else {
+          final errorData = jsonDecode(responseData.body);
+          return ResponseDefault(
+            resp: false,
+            msg: errorData['message'] ?? 'Error en el registro',
+          );
+        }
       }
     } on SocketException {
       return ResponseDefault(
