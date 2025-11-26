@@ -4,9 +4,6 @@ import 'package:agrosig/screens/auth/views/sing_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../components/animations/animation_route.dart';
 import '../../../components/custom/text_custom.dart';
 import '../../../components/forms/form_fiel.dart';
@@ -50,9 +47,6 @@ class _SignInScreenState extends State<SignInScreen> {
     _passwordController.clear();
   }
 
-  FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-
   bool isSigning = false;
 
   // Metodo para registrar token FMC despues del login
@@ -73,7 +67,7 @@ class _SignInScreenState extends State<SignInScreen> {
       appBar: AppBar(
         leading: InkWell(
           onTap: () {
-            Get.offAll(() => SignUpPage());
+            Navigator.push(context, routeAgroSig(page: SignUpPage()));
           },
           child: Container(
             alignment: Alignment.center,
@@ -103,19 +97,19 @@ class _SignInScreenState extends State<SignInScreen> {
               alignment: Alignment.center,
               child: isSigning
                   ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: ColorsAgrosig.primaryColor,
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ColorsAgrosig.primaryColor,
+                      ),
+                    )
                   : TextCustom(
-                text: 'Entrar',
-                color: ColorsAgrosig.primaryColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+                      text: 'Entrar',
+                      color: ColorsAgrosig.primaryColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
             ),
           )
         ],
@@ -181,7 +175,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   hintText: 'ejemplo@agrosig.com',
                   keyboardType: TextInputType.emailAddress,
                   validator: validatedEmail,
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[500]),
+                  prefixIcon:
+                      Icon(Icons.email_outlined, color: Colors.grey[500]),
                 ),
               ],
             ),
@@ -214,28 +209,31 @@ class _SignInScreenState extends State<SignInScreen> {
             // Botón de Login
             _buildLoginButton(),
 
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 25.0),
 
-            // Separador
-            Row(
-              children: [
-                Expanded(child: Divider(color: Colors.grey[300])),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: TextCustom(
-                    text: 'o continuar con',
-                    color: Colors.grey[500]!,
-                    fontSize: 14,
+            // Enlace para registrarse
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextCustom(
+                    text: '¿No tienes una cuenta? ',
+                    fontSize: 16,
+                    color: Colors.grey[600]!,
                   ),
-                ),
-                Expanded(child: Divider(color: Colors.grey[300])),
-              ],
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, routeAgroSig(page: SignUpPage())),
+                    child: TextCustom(
+                      text: 'Regístrate',
+                      fontSize: 16,
+                      color: ColorsAgrosig.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 20.0),
-
-            // Botón de Google
-            _buildGoogleSignInButton(),
 
             const SizedBox(height: 25.0),
 
@@ -243,7 +241,8 @@ class _SignInScreenState extends State<SignInScreen> {
             Align(
               alignment: Alignment.center,
               child: InkWell(
-                onTap: () => Navigator.push(context, routeAgroSig(page: ResetPassword())),
+                onTap: () => Navigator.push(
+                    context, routeAgroSig(page: ResetPassword())),
                 child: TextCustom(
                   text: '¿Olvidaste tu contraseña?',
                   fontSize: 16,
@@ -261,15 +260,18 @@ class _SignInScreenState extends State<SignInScreen> {
               decoration: BoxDecoration(
                 color: ColorsAgrosig.primaryColor.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: ColorsAgrosig.primaryColor.withOpacity(0.1)),
+                border: Border.all(
+                    color: ColorsAgrosig.primaryColor.withOpacity(0.1)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.security_rounded, color: ColorsAgrosig.primaryColor, size: 16),
+                  Icon(Icons.security_rounded,
+                      color: ColorsAgrosig.primaryColor, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextCustom(
-                      text: 'Tus datos están protegidos con encriptación de última generación',
+                      text:
+                          'Tus datos están protegidos y nunca serán compartidos con terceros',
                       color: Colors.grey[600]!,
                       fontSize: 12,
                       textAlign: TextAlign.left,
@@ -309,61 +311,30 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Center(
               child: isSigning
                   ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
                   : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.login_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Iniciar Sesión",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.login_rounded,
+                            color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Iniciar Sesión",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleSignInButton() {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: isSigning ? null : _signInWithGoogle,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(FontAwesomeIcons.google, color: Colors.red, size: 18),
-              const SizedBox(width: 10),
-              Text(
-                "Continuar con Google",
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -384,12 +355,12 @@ class _SignInScreenState extends State<SignInScreen> {
     String password = _passwordController.text.trim();
 
     try {
-      final response = await authServices.loginUser(
-          email: email,
-          password: password
-      );
+      final response =
+          await authServices.loginUser(email: email, password: password);
 
-      if (response.resp == true || response.msg.toLowerCase().contains('éxito') || response.msg.toLowerCase().contains('success')) {
+      if (response.resp == true ||
+          response.msg.toLowerCase().contains('éxito') ||
+          response.msg.toLowerCase().contains('success')) {
         showToast(message: '¡Bienvenido a AgroSig!');
 
         final token = await secureStorage.getAccessToken();
@@ -430,41 +401,6 @@ class _SignInScreenState extends State<SignInScreen> {
           isSigning = false;
         });
       }
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
-
-      if (googleSignInAccount != null) {
-        await _googleSignIn.signOut();
-
-        final GoogleSignInAccount? newGoogleSignInAccount = await _googleSignIn.signIn();
-
-        if (newGoogleSignInAccount != null) {
-          final GoogleSignInAuthentication googleSignInAuthentication =
-          await newGoogleSignInAccount.authentication;
-          final AuthCredential credential = GoogleAuthProvider.credential(
-            accessToken: googleSignInAuthentication.accessToken,
-            idToken: googleSignInAuthentication.idToken,
-          );
-          final UserCredential authResult = await _auth.signInWithCredential(credential);
-          final User? user = authResult.user;
-
-          if (user != null) {
-            showToast(message: "Inicio de sesión con Google exitoso");
-            // Aquí podrías integrar con tu backend para registrar/login con Google
-            // Por ahora redirigimos a HomeScreen
-            Get.offAll(() => HomeScreen());
-          } else {
-            showToast(message: "Error al iniciar sesión con Google");
-          }
-        }
-      }
-    } catch (error) {
-      print("Error al iniciar sesión con Google: $error");
-      showToast(message: "Error al iniciar sesión con Google");
     }
   }
 }

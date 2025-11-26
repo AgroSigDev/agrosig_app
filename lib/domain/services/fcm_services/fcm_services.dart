@@ -15,7 +15,8 @@ class FcmServices {
   FcmServices() : _client = CustomHttpClient.create();
 
   // Registrar token FCM
-  Future<NotificationResponse> registerFCMToken(String fcmToken, {String deviceType = 'mobile'}) async {
+  Future<NotificationResponse> registerFCMToken(String fcmToken,
+      {String deviceType = 'mobile'}) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -127,19 +128,14 @@ class FcmServices {
       // Calcula offset basado en página
       final offset = (page - 1) * limit;
 
-      // Construir querys parameters
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
         'unread_only': unreadOnly.toString(),
       };
 
-      if (todayOnly) {
-        final today = DateTime.now().toIso8601String().split('T')[0];
-        queryParams['date'] = today;
-      }
-
-      final uri = Uri.parse('${Environment.notifications}/notifications').replace(
+      final uri =
+          Uri.parse('${Environment.notifications}/notifications').replace(
         queryParameters: queryParams,
       );
 
@@ -159,25 +155,24 @@ class FcmServices {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
-        // Maneja la nueva estructura de respuesta
         final notifications = (responseData['notifications'] as List? ?? [])
             .map((item) => NotificationModel.fromJson(item))
             .toList();
 
-        // Crea paginación básica si el backend no la proporciona
+        final total = responseData['total'] ?? notifications.length;
         final hasMore = notifications.length == limit;
 
         return NotificationListResponse(
           success: true,
-          message: responseData['message'] ?? '',
+          message: 'Notificaciones obtenidas exitosamente',
           data: NotificationListData(
             notifications: notifications,
             pagination: PaginationInfo(
               currentPage: page,
               perPage: limit,
-              total: responseData['total'] ?? notifications.length,
-              totalPages: hasMore ? page + 1 : page,
-              hasNext: hasMore,
+              total: total,
+              totalPages: (total / limit).ceil(),
+              hasNext: page < (total / limit).ceil(),
               hasPrev: page > 1,
             ),
           ),
@@ -253,7 +248,8 @@ class FcmServices {
         final errorData = json.decode(response.body);
         return NotificationResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al marcar notificación como leída',
+          message:
+              errorData['message'] ?? 'Error al marcar notificación como leída',
         );
       }
     } on SocketException {
@@ -291,13 +287,15 @@ class FcmServices {
         final decodedData = jsonDecode(response.body);
         return NotificationResponse(
           success: true,
-          message: decodedData['message'] ?? 'Todas las notificaciones marcadas como leídas',
+          message: decodedData['message'] ??
+              'Todas las notificaciones marcadas como leídas',
         );
       } else {
         final errorData = json.decode(response.body);
         return NotificationResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al marcar todas las notificaciones como leídas',
+          message: errorData['message'] ??
+              'Error al marcar todas las notificaciones como leídas',
         );
       }
     } on SocketException {
@@ -334,14 +332,8 @@ class FcmServices {
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
 
-        // MANEJO SEGURO DEL unread_count
-        int unreadCount = 0;
-        if (decodedData['unread_count'] is int) {
-          unreadCount = decodedData['unread_count'];
-        } else if (decodedData['unread_count'] is Map) {
-          // Si por algún motivo todavía viene como objeto
-          unreadCount = decodedData['unread_count']['rowCount'] ?? 0;
-        }
+        // ✅ SIMPLIFICADO - El backend devuelve unread_count directamente
+        final unreadCount = decodedData['unread_count'] ?? 0;
 
         return UnreadCountResponse(
           success: true,
@@ -351,7 +343,8 @@ class FcmServices {
         final errorData = json.decode(response.body);
         return UnreadCountResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al obtener el conteo de no leídas',
+          message:
+              errorData['message'] ?? 'Error al obtener el conteo de no leídas',
           unreadCount: 0,
         );
       }
