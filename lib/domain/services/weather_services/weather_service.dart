@@ -17,7 +17,7 @@ class ClimateServices {
   Future<ClimateResponse> getWeather(int plotId) async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
@@ -30,7 +30,7 @@ class ClimateServices {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
       );
 
@@ -55,7 +55,7 @@ class ClimateServices {
   Future<WeeklyForecastResponse> getWeeklyWeather(int plotId) async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
@@ -68,7 +68,7 @@ class ClimateServices {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
       );
 

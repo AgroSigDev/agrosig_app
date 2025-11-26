@@ -36,21 +36,27 @@ class CropReportService {
       );
 
       print('Report Data Status: ${response.statusCode}');
+      print('Report Data Response: ${response.body}');
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
-        return CropReportResponse(
-          success: true,
-          message: 'Datos del reporte obtenidos exitosamente',
-          data: CropReport.fromJson(decodedData),
-        );
+
+        //  Acceder a data dentro de la respuesta
+        if (decodedData['success'] == true && decodedData['data'] != null) {
+          return CropReportResponse(
+            success: true,
+            message: 'Datos del reporte obtenidos exitosamente',
+            data: CropReport.fromJson(
+                decodedData['data']),
+          );
+        } else {
+          throw Exception(
+              decodedData['message'] ?? 'Error en la respuesta del reporte');
+        }
       } else {
         final errorData = json.decode(response.body);
-        return CropReportResponse(
-          success: false,
-          message: errorData['error'] ?? 'Error al obtener datos del reporte',
-          data: null,
-        );
+        throw Exception(
+            errorData['message'] ?? 'Error al obtener datos del reporte');
       }
     } on SocketException {
       throw Exception('Error de conexión: No hay internet');
@@ -84,9 +90,10 @@ class CropReportService {
       if (response.statusCode == 200) {
         // Guardar el PDF localmente
         final directory = await getApplicationDocumentsDirectory();
-        final fileName = 'Reporte_${cropName}_${DateTime.now().millisecondsSinceEpoch}.pdf'
-            .replaceAll(' ', '_')
-            .replaceAll('/', '_');
+        final fileName =
+            'Reporte_${cropName}_${DateTime.now().millisecondsSinceEpoch}.pdf'
+                .replaceAll(' ', '_')
+                .replaceAll('/', '_');
         final file = File('${directory.path}/$fileName');
 
         await file.writeAsBytes(response.bodyBytes);
@@ -94,17 +101,18 @@ class CropReportService {
 
         // Abrir el archivo PDF
         await OpenFile.open(file.path);
-
       } else {
         if (response.body.isNotEmpty) {
           try {
             final errorData = json.decode(utf8.decode(response.bodyBytes));
             throw Exception(errorData['error'] ?? 'Error al descargar el PDF');
           } catch (e) {
-            throw Exception('Error al descargar el PDF (Status: ${response.statusCode})');
+            throw Exception(
+                'Error al descargar el PDF (Status: ${response.statusCode})');
           }
         } else {
-          throw Exception('Error al descargar el PDF (Status: ${response.statusCode})');
+          throw Exception(
+              'Error al descargar el PDF (Status: ${response.statusCode})');
         }
       }
     } on SocketException {
@@ -135,15 +143,17 @@ class CropReportService {
 
       if (response.statusCode == 200) {
         final directory = await getApplicationDocumentsDirectory();
-        final fileName = 'Reporte_${cropName}_${DateTime.now().millisecondsSinceEpoch}.pdf'
-            .replaceAll(' ', '_')
-            .replaceAll('/', '_');
+        final fileName =
+            'Reporte_${cropName}_${DateTime.now().millisecondsSinceEpoch}.pdf'
+                .replaceAll(' ', '_')
+                .replaceAll('/', '_');
         final file = File('${directory.path}/$fileName');
 
         await file.writeAsBytes(response.bodyBytes);
         return file.path;
       } else {
-        throw Exception('Error al descargar el PDF (Status: ${response.statusCode})');
+        throw Exception(
+            'Error al descargar el PDF (Status: ${response.statusCode})');
       }
     } catch (error) {
       throw Exception('Error al descargar el reporte: ${error.toString()}');

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:agrosig/components/picker/image_profile_picker.dart';
 import 'package:agrosig/domain/services/user_services/user_services.dart';
 import 'package:agrosig/screens/settings/edit_parcel_screen.dart';
 import 'package:agrosig/screens/settings/help_screen.dart';
@@ -9,12 +10,10 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../components/animations/animation_route.dart';
 import '../../components/custom/text_custom.dart';
-import '../../components/helper/modal_picture.dart';
 import '../../components/item_account.dart';
 import '../../components/toast/toats.dart';
 import '../../data/local_secure/secure_storage.dart';
 import '../../domain/models/user/user_model.dart';
-import '../../domain/services/firebase_service/google_services.dart';
 import '../../domain/services/auth_services/auth_services.dart';
 import '../auth/views/sign_in_screen.dart';
 import 'change_password_screen.dart';
@@ -29,13 +28,11 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final SecureStorageAgroSig _secureStorageAgroSig = SecureStorageAgroSig();
-  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
   final UserServices _userServices = UserServices();
   final AuthServices _authServices = AuthServices();
   User? _user;
   bool _isLoading = true;
   bool _isUpdatingImage = false;
-  File? _selectedImage;
 
   bool _isDisposed = false;
 
@@ -78,7 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _handleImageSelection(File image) async {
     _safeSetState(() {
-      _selectedImage = image;
       _isUpdatingImage = true;
     });
 
@@ -87,133 +83,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _safeSetState(() {
         _user = updatedUser;
         _isUpdatingImage = false;
-        _selectedImage = null;
       });
-      _showSuccessSnackBar('Imagen de perfil actualizada correctamente');
+      showToast(message: 'Imagen de perfil actualizada correctamente');
     } catch (e) {
       _safeSetState(() {
         _isUpdatingImage = false;
-        _selectedImage = null;
       });
       _showErrorSnackBar('Error al actualizar imagen: $e');
-    }
-  }
-
-  Future<void> _showImagePicker() async {
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 16),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Seleccionar imagen',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Divider(height: 1, color: Colors.grey.shade300),
-                ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.photo_library, color: Colors.blue.shade700),
-                  ),
-                  title: const Text(
-                    'Galería',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await _selectImage(ImageSource.gallery);
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade300),
-                ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.photo_camera, color: Colors.green.shade700),
-                  ),
-                  title: const Text(
-                    'Cámara',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await _selectImage(ImageSource.camera);
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _selectImage(ImageSource source) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: source,
-        imageQuality: 80,
-        maxWidth: 512,
-        maxHeight: 512,
-      );
-
-      if (image != null && mounted) {
-        await _handleImageSelection(File(image.path));
-      } else {
-        showToast(message: 'No se seleccionó imagen');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error al seleccionar imagen: ${e.toString()}');
-      }
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
@@ -248,26 +124,26 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: _isLoading
           ? const Center(
-        child: CircularProgressIndicator(),
-      )
+              child: CircularProgressIndicator(),
+            )
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // Header con avatar y información
-            _buildProfileHeader(),
-            const SizedBox(height: 32.0),
-            // Sección de cuenta
-            _buildAccountSection(),
-            const SizedBox(height: 24.0),
-            // Sección personal
-            _buildPersonalSection(),
-            const SizedBox(height: 24.0),
-            // Botón de cerrar sesión
-            _buildSignOutButton(),
-          ],
-        ),
-      ),
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  // Header con avatar y información
+                  _buildProfileHeader(),
+                  const SizedBox(height: 32.0),
+                  // Sección de cuenta
+                  _buildAccountSection(),
+                  const SizedBox(height: 24.0),
+                  // Sección personal
+                  _buildPersonalSection(),
+                  const SizedBox(height: 24.0),
+                  // Botón de cerrar sesión
+                  _buildSignOutButton(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -287,11 +163,19 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              _buildProfileAvatar(),
-              _buildEditIcon(),
-            ],
+          ProfileImagePicker(
+            onImageSelected: (XFile? image) async {
+              if (image != null) {
+                await _handleImageSelection(File(image.path));
+              }
+            },
+            currentImageUrl:
+                _user?.image_user != null && _user!.image_user!.isNotEmpty
+                    ? _userServices.getImageUrl(_user!.image_user)
+                    : null,
+            showEditIcon: true,
+            size: 150,
+            isUpdating: _isUpdatingImage,
           ),
           const SizedBox(height: 20),
           _buildUserName(),
@@ -304,128 +188,13 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildProfileAvatar() {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.blue.shade100,
-          width: 4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: _isUpdatingImage && _selectedImage != null
-            ? Image.file(
-          _selectedImage!,
-          fit: BoxFit.cover,
-          width: 150,
-          height: 150,
-        )
-            : _user?.image_user != null && _user!.image_user!.isNotEmpty
-            ? _buildNetworkImage()
-            : _buildDefaultAvatar(),
-      ),
-    );
-  }
-
-  Widget _buildNetworkImage() {
-    final imageUrl = _userServices.getImageUrl(_user!.image_user);
-
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
-      width: 150,
-      height: 150,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Center(
-          child: CircularProgressIndicator(
-            value: loadingProgress.expectedTotalBytes != null
-                ? loadingProgress.cumulativeBytesLoaded /
-                loadingProgress.expectedTotalBytes!
-                : null,
-          ),
-        );
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return _buildDefaultAvatar();
-      },
-    );
-  }
-
-  Widget _buildDefaultAvatar() {
-    return Container(
-      color: Colors.grey.shade100,
-      child: Icon(
-        Icons.person,
-        size: 70,
-        color: Colors.grey.shade400,
-      ),
-    );
-  }
-
-  Widget _buildEditIcon() {
-    return Positioned(
-      bottom: 8,
-      right: 8,
-      child: GestureDetector(
-        onTap: _isUpdatingImage ? null : _showImagePicker,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF4772E6), Color(0xFF1B83F5)],
-            ),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white,
-              width: 3,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: _isUpdatingImage
-              ? const Padding(
-            padding: EdgeInsets.all(10.0),
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
-              : const Icon(
-            Icons.camera_alt,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildUserName() {
     return Column(
       children: [
         Text(
           _user != null ? _formatUserName() : 'Nombre de Usuario',
           style: const TextStyle(
-            fontSize: 24, // Aumentado
+            fontSize: 24,
             fontWeight: FontWeight.w700,
             color: Color(0xFF1E1E1E),
           ),
@@ -454,10 +223,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: _user?.role_id == 1 ? Colors.orange.shade50 : Colors.blue.shade50,
+        color:
+            _user?.role_id == 1 ? Colors.orange.shade50 : Colors.blue.shade50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _user?.role_id == 1 ? Colors.orange.shade200 : Colors.blue.shade200,
+          color: _user?.role_id == 1
+              ? Colors.orange.shade200
+              : Colors.blue.shade200,
         ),
       ),
       child: Text(
@@ -465,7 +237,9 @@ class _SettingsPageState extends State<SettingsPage> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: _user?.role_id == 1 ? Colors.orange.shade700 : Colors.blue.shade700,
+          color: _user?.role_id == 1
+              ? Colors.orange.shade700
+              : Colors.blue.shade700,
         ),
       ),
     );
@@ -522,7 +296,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.person_outline,
                   colorIcon: 0xff01C58C,
                   onPressed: () async {
-                    // Navegar y esperar a que regrese
                     await Navigator.push(
                       context,
                       routeAgroSig(page: EditProfileScreen()),
@@ -601,27 +374,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.lock_outline_rounded,
                     colorIcon: 0xFF6F767E,
                     onPressed: () => Navigator.push(
-                        context,
-                        routeAgroSig(page: PrivacyPolicyScreen())
-                    )
-                ),
+                        context, routeAgroSig(page: PrivacyPolicyScreen()))),
                 ItemAccount(
-                  text: 'Términos y condiciones',
-                  icon: Icons.description_outlined,
-                  colorIcon: 0xff458bff,
-                  onPressed: () => Navigator.push(
-                      context,
-                      routeAgroSig(page: TermsAndConditionsScreen())
-                  )
-                ),
+                    text: 'Términos y condiciones',
+                    icon: Icons.description_outlined,
+                    colorIcon: 0xff458bff,
+                    onPressed: () => Navigator.push(context,
+                        routeAgroSig(page: TermsAndConditionsScreen()))),
                 Divider(height: 1, color: Colors.grey.shade100),
                 ItemAccount(
                   text: 'Centro de ayuda',
                   icon: Icons.help_outline,
                   colorIcon: 0xff4772e6,
                   onPressed: () => Navigator.push(
-                      context,
-                      routeAgroSig(page: HelpScreen()),
+                    context,
+                    routeAgroSig(page: HelpScreen()),
                   ),
                 ),
               ],
@@ -766,13 +533,10 @@ class _SettingsPageState extends State<SettingsPage> {
         await _authServices.logout();
       }
 
-      await _firebaseAuthService.signOut();
-
       Get.offAll(() => SignInScreen());
     } catch (e) {
       print('Error durante logout: $e');
       await _secureStorageAgroSig.clearAllData();
-      await _firebaseAuthService.signOut();
       Get.offAll(() => SignInScreen());
     }
   }

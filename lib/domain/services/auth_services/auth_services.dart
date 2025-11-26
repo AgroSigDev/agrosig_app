@@ -22,13 +22,13 @@ class AuthServices {
 
   // ========== REGISTER ==========
   Future<ResponseDefault> registerUser(
-      String firstName,
-      String paternalSurname,
-      String maternalSurname,
-      String? imagePath,
-      String email,
-      String password,
-      ) async {
+    String firstName,
+    String paternalSurname,
+    String maternalSurname,
+    String? imagePath,
+    String email,
+    String password,
+  ) async {
     try {
       // Si no hay imagen, enviar como JSON normal
       if (imagePath == null) {
@@ -177,8 +177,6 @@ class AuthServices {
     }
   }
 
-
-
   // ========== DECODE JWT TOKEN ==========
   Map<String, dynamic> _decodeToken(String token) {
     try {
@@ -273,32 +271,32 @@ class AuthServices {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
 
-      if (token != null || refreshToken != null) {
+      // Verificar que los tokens NO sean nulos
+      if (token == null || refreshToken == null) {
         throw Exception('Usuario no autenticado');
       }
-        final response = await _client.post(
-          Uri.parse('${Environment.auth}/logout'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
-            'x-refresh-token': '$refreshToken',
-          },
-        );
 
-        if (response.statusCode == 200) {
-          return ResponseDefault.fromJson(jsonDecode(response.body));
-        }
+      final response = await _client.post(
+        Uri.parse('${Environment.auth}/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken, 
+        },
+      );
 
-
-      await FirebaseMessagingService().unregisterTokenOnLogout();
-      await SecureStorageAgroSig().clearAllData();
-
-      // Si falla el logout del backend, igual limpiamos localmente
-      return ResponseDefault(resp: true, msg: 'Logout exitoso');
+      if (response.statusCode == 200) {
+        return ResponseDefault.fromJson(jsonDecode(response.body));
+      } else {
+        // Si el logout del backend falla, igual limpiamos localmente
+        throw Exception('Error en logout del servidor');
+      }
     } catch (e) {
       print('Logout error: $e');
       // En caso de error, igual limpiamos localmente
+      await FirebaseMessagingService().unregisterTokenOnLogout();
+      await SecureStorageAgroSig().clearAllData();
       return ResponseDefault(resp: true, msg: 'Logout exitoso');
     }
   }

@@ -37,7 +37,8 @@ class CropService {
       print('Crop Status: ${response.statusCode}');
       print('Crop Response: ${response.body}');
 
-      if (response.statusCode == 201) { // 201 para creación exitosa
+      if (response.statusCode == 201) {
+        // 201 para creación exitosa
         final decodedData = jsonDecode(response.body);
         return CropResponse(
           success: true,
@@ -237,66 +238,45 @@ class CropService {
       );
 
       print('Delete Crop Status: ${response.statusCode}');
-      print('Delete Crop Response: ${response.body}');
 
-      // Manejar correctamente el status 204 (No Content)
-      if (response.statusCode == 204 || response.statusCode == 200) {
-        // Para status 204, la respuesta está vacía - no intentar parsear JSON
-        if (response.statusCode == 204) {
-          return CropResponse(
-            success: true,
-            message: 'Cultivo eliminado exitosamente',
-            data: null,
-          );
-        } else {
-          // Para status 200, intentar parsear la respuesta si existe
-          if (response.body.isNotEmpty) {
-            final decodedData = jsonDecode(response.body);
-            return CropResponse(
-              success: true,
-              message: decodedData['message'] ??
-                  'Cultivo eliminado exitosamente',
-              data: null,
-            );
-          } else {
-            return CropResponse(
-              success: true,
-              message: 'Cultivo eliminado exitosamente',
-              data: null,
-            );
-          }
-        }
-      } else {
-        // Manejar otros códigos de error
-        if (response.body.isNotEmpty) {
-          final errorData = json.decode(response.body);
-          return CropResponse(
-            success: false,
-            message: errorData['message'] ?? 'Error al eliminar el cultivo',
-            data: null,
-          );
-        } else {
-          return CropResponse(
-            success: false,
-            message: 'Error al eliminar el cultivo (Status: ${response
-                .statusCode})',
-            data: null,
-          );
-        }
-      }
-    } on SocketException {
-      throw Exception('Error de conexión: No hay internet');
-    } on FormatException catch (e) {
-      print('FormatException handled: $e');
-      if (e.toString().contains('Unexpected end of input')) {
+      // Manejo simplificado para 204
+      if (response.statusCode == 204) {
         return CropResponse(
           success: true,
           message: 'Cultivo eliminado exitosamente',
           data: null,
         );
-      } else {
-        throw Exception('Error de formato en la respuesta: ${e.toString()}');
       }
+
+      // Para otros códigos de éxito
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final decodedData = jsonDecode(response.body);
+          return CropResponse(
+            success: true,
+            message: decodedData['message'] ?? 'Cultivo eliminado exitosamente',
+            data: null,
+          );
+        }
+        return CropResponse(
+          success: true,
+          message: 'Cultivo eliminado exitosamente',
+          data: null,
+        );
+      }
+
+      // Manejo de errores
+      final errorData = response.body.isNotEmpty
+          ? json.decode(response.body)
+          : {'message': 'Error al eliminar el cultivo'};
+
+      return CropResponse(
+        success: false,
+        message: errorData['message'],
+        data: null,
+      );
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
     } catch (error) {
       print('Error deleting crop: $error');
       throw Exception('Error en el servidor: ${error.toString()}');

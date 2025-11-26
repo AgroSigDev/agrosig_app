@@ -58,7 +58,7 @@ class _ResetPasswordState extends State<ResetPassword> {
               size: 20,
               color: ColorsAgrosig.primaryColor
           ),
-          onPressed: () => Navigator.pushReplacement(context, routeAgroSig(page: SignInScreen())),
+          onPressed: () => Navigator.push(context, routeAgroSig(page: SignInScreen())),
         ),
       ),
       body: SafeArea(

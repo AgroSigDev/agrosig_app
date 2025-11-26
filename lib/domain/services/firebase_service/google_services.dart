@@ -65,7 +65,7 @@ class FirebaseAuthService {
   }
 
   // Metodo para reestablecer contraseña
-  Future<User?> PasswordReset(String email) async {
+  Future<void> passwordReset(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
       showToast(message: 'Password reset email has ben sent to $email.');
