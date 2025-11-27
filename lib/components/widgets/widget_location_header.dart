@@ -17,19 +17,31 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
   final PlotServices _plotServices = PlotServices();
   String _location = "Cargando ubicación...";
   bool _isLoading = true;
+  bool _isDisposed = false; // ← Añadir esta bandera
 
   @override
   void initState() {
     super.initState();
     _loadUserLocation();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationProvider.notifier).loadUnreadCount();
+      if (!_isDisposed) { // ← Verificar antes de ejecutar
+        ref.read(notificationProvider.notifier).loadUnreadCount();
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // ← Marcar como disposed
+    super.dispose();
   }
 
   Future<void> _loadUserLocation() async {
     try {
       final response = await _plotServices.getPlotCoordinates();
+
+      // Verificar si el widget sigue montado antes de setState
+      if (_isDisposed) return;
 
       if (response.success && response.data.isNotEmpty) {
         final plot = response.data.first;
@@ -40,6 +52,7 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
           _isLoading = false;
         });
       } else {
+        if (_isDisposed) return;
         setState(() {
           _location = "No hay parcelas registradas";
           _isLoading = false;
@@ -47,6 +60,7 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
       }
     } catch (e) {
       print('Error loading location: $e');
+      if (_isDisposed) return;
       setState(() {
         _location = "Error al cargar ubicación";
         _isLoading = false;
@@ -62,7 +76,9 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
         context,
         MaterialPageRoute(builder: (context) => const NotificationsScreen()),
       ).then((_) {
-        ref.read(notificationProvider.notifier).loadUnreadCount();
+        if (!_isDisposed) { // ← Verificar antes de actualizar
+          ref.read(notificationProvider.notifier).loadUnreadCount();
+        }
       });
     }
   }
@@ -74,7 +90,6 @@ class _LocationHeaderState extends ConsumerState<LocationHeader> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Alternativa más ligera
         Flexible(
           child: Container(
             constraints: BoxConstraints(

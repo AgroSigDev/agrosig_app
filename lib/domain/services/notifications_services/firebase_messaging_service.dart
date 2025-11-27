@@ -17,15 +17,17 @@ class FirebaseMessagingService {
 
   // Stream para notificaciones en tiempo real
   final StreamController<Map<String, dynamic>> _notificationController =
-  StreamController<Map<String, dynamic>>.broadcast();
-  Stream<Map<String, dynamic>> get notificationStream => _notificationController.stream;
+      StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get notificationStream =>
+      _notificationController.stream;
 
   // Stream para actualización del contador
   final StreamController<int> _unreadCountController =
-  StreamController<int>.broadcast();
+      StreamController<int>.broadcast();
   Stream<int> get unreadCountStream => _unreadCountController.stream;
 
-  static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
+  static final FirebaseMessagingService _instance =
+      FirebaseMessagingService._internal();
   factory FirebaseMessagingService() => _instance;
   FirebaseMessagingService._internal();
 
@@ -35,7 +37,8 @@ class FirebaseMessagingService {
       await _initializeLocalNotifications();
 
       // Solicitar permisos
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -50,7 +53,6 @@ class FirebaseMessagingService {
 
       // Configurar manejo de temas (opcional)
       await _setupTopicSubscription();
-
     } catch (e) {
       print('Error initializing Firebase Messaging: $e');
     }
@@ -60,16 +62,17 @@ class FirebaseMessagingService {
     _localNotifications = FlutterLocalNotificationsPlugin();
 
     const AndroidInitializationSettings androidSettings =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings iosSettings =
-    DarwinInitializationSettings(
+        DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
@@ -83,10 +86,9 @@ class FirebaseMessagingService {
   }
 
   StreamController<List<NotificationModel>> _notificationsListController =
-  StreamController<List<NotificationModel>>.broadcast();
-  Stream<List<NotificationModel>> get notificationsListStream => _notificationsListController.stream;
-
-
+      StreamController<List<NotificationModel>>.broadcast();
+  Stream<List<NotificationModel>> get notificationsListStream =>
+      _notificationsListController.stream;
 
   Future<void> _setupFCMToken() async {
     try {
@@ -129,7 +131,8 @@ class FirebaseMessagingService {
     });
 
     // App abierta desde notificación estando cerrada
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       _handleBackgroundNotificationTap(initialMessage);
     }
@@ -147,7 +150,8 @@ class FirebaseMessagingService {
   }
 
   void _handleForegroundNotification(RemoteMessage message) {
-    print('Manejando notificación en foreground: ${message.notification?.title}');
+    print(
+        'Manejando notificación en foreground: ${message.notification?.title}');
 
     // Mostrar notificación local
     _showLocalNotification(message);
@@ -185,11 +189,9 @@ class FirebaseMessagingService {
   // método para forzar actualización
   void _triggerNotificationsRefresh() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Usar GetX para encontrar el controlador y refrescar
       try {
-        final context = Get.context;
-        if (context != null) {
-          // Disparar un evento global que pueda ser escuchado por la pantalla de notificaciones
+        // Verificar si el StreamController está cerrado antes de enviar eventos
+        if (!_notificationsListController.isClosed) {
           _notificationsListController.add([]);
         }
       } catch (e) {
@@ -201,7 +203,7 @@ class FirebaseMessagingService {
   Future<void> _showLocalNotification(RemoteMessage message) async {
     try {
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
+          AndroidNotificationDetails(
         'agrosig_channel_id',
         'AgroSig Notifications',
         channelDescription: 'Canal para notificaciones de AgroSig',
@@ -214,7 +216,7 @@ class FirebaseMessagingService {
       );
 
       const DarwinNotificationDetails iosPlatformChannelSpecifics =
-      DarwinNotificationDetails(
+          DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
@@ -436,7 +438,7 @@ class FirebaseMessagingService {
       await _localNotifications.cancelAll();
       if (count > 0) {
         const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
+            AndroidNotificationDetails(
           'badge_channel_id',
           'Badge Updates',
           channelDescription: 'Canal para actualizaciones de badge',
@@ -486,6 +488,8 @@ class FirebaseMessagingService {
   void dispose() {
     _notificationController.close();
     _unreadCountController.close();
+    _notificationsListController
+        .close(); // ← Asegurar que este también se cierre
     print('FirebaseMessagingService disposed');
   }
 

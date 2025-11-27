@@ -10,11 +10,7 @@ import '../../domain/services/fcm_services/fcm_services.dart';
 import '../../domain/models/notifications/notifications_model.dart';
 import '../../domain/services/notifications_services/firebase_messaging_service.dart';
 
-enum NotificationFilter {
-  all,
-  unread,
-  today
-}
+enum NotificationFilter { all, unread, today }
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -41,6 +37,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   StreamSubscription? _notificationStreamSubscription;
   StreamSubscription? _notificationsListStreamSubscription;
 
+  // Añadir bandera para controlar el estado del widget
+  bool _isDisposed = false;
+
   @override
   void initState() {
     super.initState();
@@ -60,7 +59,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _setupNotificationListeners() {
     // Escuchar nuevas notificaciones individuales
-    _notificationStreamSubscription = _messagingService.notificationStream.listen((event) {
+    _notificationStreamSubscription =
+        _messagingService.notificationStream.listen((event) {
+      if (_isDisposed) return;
       print('Nueva notificación recibida en tiempo real');
       // Recargar la lista cuando llegue una nueva notificación
       _loadNotifications(isInitial: true);
@@ -68,7 +69,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     // Escuchar eventos de refresco de lista
-    _notificationsListStreamSubscription = _messagingService.notificationsListStream.listen((event) {
+    _notificationsListStreamSubscription =
+        _messagingService.notificationsListStream.listen((event) {
+      if (_isDisposed) return;
       print('Refrescando lista de notificaciones');
       _loadNotifications(isInitial: true);
       _loadUnreadCount();
@@ -108,6 +111,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         unreadOnly: unreadOnly,
       );
 
+      // Verificar si el widget sigue montado antes de setState
+      if (_isDisposed) return;
+
       if (response.success) {
         setState(() {
           if (_currentPage == 1) {
@@ -120,6 +126,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _isLoadingMore = false;
         });
       } else {
+        if (_isDisposed) return;
         setState(() {
           _hasError = true;
           _isLoading = false;
@@ -128,6 +135,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         showToast(message: response.message);
       }
     } catch (error) {
+      if (_isDisposed) return;
       setState(() {
         _hasError = true;
         _isLoading = false;
@@ -142,6 +150,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final response = await _notificationRepo.getUnreadCount();
       if (response.success) {
+        if (_isDisposed) return;
         setState(() {
           _unreadCount = response.unreadCount;
         });
@@ -165,18 +174,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAsRead(int notificationId) async {
     try {
-      final response = await _notificationRepo.markAsRead(notificationId.toString());
+      final response =
+          await _notificationRepo.markAsRead(notificationId.toString());
 
       if (response.success) {
+        if (_isDisposed) return;
         setState(() {
           // Remover la notificación de la lista si estamos en el filtro de no leídas
           if (_currentFilter == NotificationFilter.unread) {
-            _notifications.removeWhere((n) => n.notificationId == notificationId);
+            _notifications
+                .removeWhere((n) => n.notificationId == notificationId);
           } else {
             // Solo marcar como leída si estamos viendo todas
-            final index = _notifications.indexWhere((n) => n.notificationId == notificationId);
+            final index = _notifications
+                .indexWhere((n) => n.notificationId == notificationId);
             if (index != -1) {
-              _notifications[index] = _notifications[index].copyWith(isRead: true);
+              _notifications[index] =
+                  _notifications[index].copyWith(isRead: true);
             }
           }
 
@@ -201,10 +215,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final response = await _notificationRepo.markAllAsRead();
 
       if (response.success) {
+        if (_isDisposed) return;
         setState(() {
-          _notifications = _notifications.map((notification)
-          => notification.copyWith(isRead: true)
-          ).toList();
+          _notifications = _notifications
+              .map((notification) => notification.copyWith(isRead: true))
+              .toList();
           _unreadCount = 0;
         });
 
@@ -219,6 +234,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _changeFilter(NotificationFilter filter) {
+    if (_isDisposed) return;
     setState(() {
       _currentFilter = filter;
       _currentPage = 1;
@@ -252,20 +268,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             decoration: BoxDecoration(
               border: isUnread
                   ? Border.all(
-                color: type.color.withOpacity(0.3),
-                width: 2,
-              )
+                      color: type.color.withOpacity(0.3),
+                      width: 2,
+                    )
                   : null,
               borderRadius: BorderRadius.circular(16),
               gradient: isUnread
                   ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  type.color.withOpacity(0.05),
-                  type.color.withOpacity(0.02),
-                ],
-              )
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        type.color.withOpacity(0.05),
+                        type.color.withOpacity(0.02),
+                      ],
+                    )
                   : null,
             ),
             child: Row(
@@ -351,10 +367,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                           ),
 
-                          // Badge "NUEVO" para no leídas
+                          // Badge para no leídas
                           if (isUnread)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: type.color.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
@@ -392,8 +409,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           const Spacer(),
 
                           // Botón de acción
-                          if (isUnread)
-                            _buildActionButton(notification),
+                          if (isUnread) _buildActionButton(notification),
                         ],
                       ),
                     ],
@@ -558,21 +574,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _handleNotificationTap(NotificationModel notification) {
     showDialog(
       context: context,
-      builder: (context) => NotificationDetailDialog(notification: notification),
+      builder: (context) =>
+          NotificationDetailDialog(notification: notification),
     ).then((_) {
-      // Recargar contador después de cerrar el diálogo
-      _loadUnreadCount();
+      // Recargar contador después de cerrar el diálogo, solo si el widget sigue activo
+      if (!_isDisposed) {
+        _loadUnreadCount();
+      }
     });
   }
 
   Widget _buildLoadingIndicator() {
     return _isLoadingMore
         ? const Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Center(
-        child: CircularProgressIndicator(),
-      ),
-    )
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
         : Container();
   }
 
@@ -589,7 +608,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              child:
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -619,7 +639,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -644,7 +665,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 color: Colors.grey.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey),
+              child: const Icon(Icons.notifications_off_outlined,
+                  size: 64, color: Colors.grey),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -675,7 +697,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -819,100 +842,102 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _hasError
           ? _buildErrorWidget()
           : _isLoading && _notifications.isEmpty
-          ? const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text(
-              'Cargando notificaciones...',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      )
-          : Column(
-        children: [
-          // Header con estadísticas
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2E7D32).withOpacity(0.05),
-                  const Color(0xFF4CAF50).withOpacity(0.02),
-                ],
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  Icons.notifications,
-                  'Total',
-                  _notifications.length,
-                  Colors.blue,
-                ),
-                _buildStatItem(
-                  Icons.mark_email_unread,
-                  'No leídas',
-                  _unreadCount,
-                  Colors.orange,
-                ),
-                _buildStatItem(
-                  Icons.today,
-                  'Hoy',
-                  _notifications.where((n) => n.isRecent).length,
-                  Colors.green,
-                ),
-              ],
-            ),
-          ),
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text(
+                        'Cargando notificaciones...',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    // Header con estadísticas
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFF2E7D32).withOpacity(0.05),
+                            const Color(0xFF4CAF50).withOpacity(0.02),
+                          ],
+                        ),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(
+                            Icons.notifications,
+                            'Total',
+                            _notifications.length,
+                            Colors.blue,
+                          ),
+                          _buildStatItem(
+                            Icons.mark_email_unread,
+                            'No leídas',
+                            _unreadCount,
+                            Colors.orange,
+                          ),
+                          _buildStatItem(
+                            Icons.today,
+                            'Hoy',
+                            _notifications.where((n) => n.isRecent).length,
+                            Colors.green,
+                          ),
+                        ],
+                      ),
+                    ),
 
-          // Filtros
-          _buildFilterChips(),
+                    // Filtros
+                    _buildFilterChips(),
 
-          // Lista de notificaciones
-          Expanded(
-            child: _notifications.isEmpty
-                ? _buildEmptyWidget()
-                : RefreshIndicator(
-              onRefresh: () async {
-                await _loadInitialData();
-              },
-              color: const Color(0xFF2E7D32),
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _notifications.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == _notifications.length) {
-                    return _buildLoadingIndicator();
-                  }
-                  return _buildNotificationItem(_notifications[index]);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+                    // Lista de notificaciones
+                    Expanded(
+                      child: _notifications.isEmpty
+                          ? _buildEmptyWidget()
+                          : RefreshIndicator(
+                              onRefresh: () async {
+                                await _loadInitialData();
+                              },
+                              color: const Color(0xFF2E7D32),
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: _notifications.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index == _notifications.length) {
+                                    return _buildLoadingIndicator();
+                                  }
+                                  return _buildNotificationItem(
+                                      _notifications[index]);
+                                },
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
     );
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _notificationStreamSubscription?.cancel();
     _notificationsListStreamSubscription?.cancel();
     _scrollController.dispose();

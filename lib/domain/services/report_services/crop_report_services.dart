@@ -35,34 +35,39 @@ class CropReportService {
         },
       );
 
-      print('Report Data Status: ${response.statusCode}');
-      print('Report Data Response: ${response.body}');
-
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
+        Map<String, dynamic> reportData;
 
-        //  Acceder a data dentro de la respuesta
+        // Detectar si la respuesta tiene wrapper o no
         if (decodedData['success'] == true && decodedData['data'] != null) {
-          return CropReportResponse(
-            success: true,
-            message: 'Datos del reporte obtenidos exitosamente',
-            data: CropReport.fromJson(
-                decodedData['data']),
-          );
+          reportData = decodedData['data'];
+        } else if (decodedData['crop'] != null) {
+          reportData = decodedData;
         } else {
-          throw Exception(
-              decodedData['message'] ?? 'Error en la respuesta del reporte');
+          throw Exception('Estructura de respuesta del reporte no reconocida');
         }
+
+        // Validar datos mínimos
+        if (reportData['crop'] == null) {
+          throw Exception('La respuesta no contiene datos del cultivo');
+        }
+        return CropReportResponse(
+          success: true,
+          message: 'Datos del reporte obtenidos exitosamente',
+          data: CropReport.fromJson(reportData),
+        );
       } else {
         final errorData = json.decode(response.body);
         throw Exception(
-            errorData['message'] ?? 'Error al obtener datos del reporte');
+            errorData['message'] ?? 'Error al obtener los datos del reporte');
       }
     } on SocketException {
       throw Exception('Error de conexión: No hay internet');
     } catch (error) {
       print('Error getting report data: $error');
-      throw Exception('Error en el servidor: ${error.toString()}');
+      throw Exception(
+          'Error obteniendo datos del reporte: ${error.toString()}');
     }
   }
 
