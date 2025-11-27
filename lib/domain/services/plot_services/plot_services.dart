@@ -25,7 +25,7 @@ class PlotServices {
   }) async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
@@ -44,7 +44,7 @@ class PlotServices {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
         body: jsonEncode({
           'plot_name': plotName,
@@ -127,7 +127,7 @@ class PlotServices {
   Future<UbicationResponse> getPlotCoordinates() async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
@@ -140,7 +140,7 @@ class PlotServices {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
       );
 
@@ -172,7 +172,7 @@ class PlotServices {
   }) async {
     try {
       final token = await _secureStorage.getAccessToken();
-      final refreshToken = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
       final userId = await _secureStorage.getUserId();
 
       if (token == null || refreshToken == null || userId == null) {
@@ -191,7 +191,7 @@ class PlotServices {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'x-refresh-token': '$refreshToken',
+          'x-refresh-token': refreshToken,
         },
         body: jsonEncode({
           'plot_name': plotName,
