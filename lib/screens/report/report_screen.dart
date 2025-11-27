@@ -20,6 +20,7 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
   bool _isLoading = true;
   Crop? _selectedCrop;
   final Map<int, bool> _cropValidationCache = {};
+  final Map<int, String> _cropValidationError = {};
 
   @override
   void initState() {
@@ -58,26 +59,64 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
   void _prevalidateCrops() async {
     for (final crop in _crops) {
       try {
+        print('Validando cultivo ${crop.cropId}: ${crop.cropType}');
+
         final reportResponse = await _reportService.getReportData(crop.cropId);
-        _cropValidationCache[crop.cropId] = reportResponse.data?.hasSufficientData ?? false;
+
+        if (reportResponse.success && reportResponse.data != null) {
+          final hasData = reportResponse.data!.activities.isNotEmpty ||
+              reportResponse.data!.summary.totalCost > 0;
+
+          _cropValidationCache[crop.cropId] = hasData;
+          _cropValidationError.remove(crop.cropId);
+
+          print('Cultivo ${crop.cropId} validado: $hasData');
+        } else {
+          _cropValidationCache[crop.cropId] = false;
+          _cropValidationError[crop.cropId] = reportResponse.message;
+          print(
+              'Error en respuesta para cultivo ${crop.cropId}: ${reportResponse.message}');
+        }
       } catch (e) {
         _cropValidationCache[crop.cropId] = false;
+        _cropValidationError[crop.cropId] = e.toString();
+        print('Excepción validando cultivo ${crop.cropId}: $e');
       }
     }
     setState(() {});
   }
 
   bool _canGenerateReport(Crop crop) {
-    return _cropValidationCache[crop.cropId] ?? false;
+    if (_cropValidationCache.containsKey(crop.cropId)) {
+      return _cropValidationCache[crop.cropId]!;
+    }
+
+    return crop.costTotal > 0;
   }
 
   String _getCropStatus(Crop crop) {
-    if (!_cropValidationCache.containsKey(crop.cropId)) return "Validando...";
-    return _canGenerateReport(crop) ? "Listo para reporte" : "Datos insuficientes";
+    if (!_cropValidationCache.containsKey(crop.cropId)) {
+      return crop.costTotal > 0 ? "Validando..." : "Sin datos";
+    }
+
+    if (_cropValidationError.containsKey(crop.cropId)) {
+      return "Error en validación";
+    }
+
+    return _canGenerateReport(crop)
+        ? "Listo para reporte"
+        : "Datos insuficientes";
   }
 
   Color _getStatusColor(Crop crop) {
-    if (!_cropValidationCache.containsKey(crop.cropId)) return Colors.orange;
+    if (!_cropValidationCache.containsKey(crop.cropId)) {
+      return crop.costTotal > 0 ? Colors.orange : Colors.grey;
+    }
+
+    if (_cropValidationError.containsKey(crop.cropId)) {
+      return Colors.red;
+    }
+
     return _canGenerateReport(crop) ? Colors.green : Colors.red;
   }
 
@@ -88,12 +127,14 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
 
   Future<void> _generateReport() async {
     if (_selectedCrop == null) {
-      errorMessageSnack(context, 'Selecciona un cultivo para generar el reporte');
+      errorMessageSnack(
+          context, 'Selecciona un cultivo para generar el reporte');
       return;
     }
 
     if (!_canGenerateReport(_selectedCrop!)) {
-      errorMessageSnack(context, 'Este cultivo no tiene datos suficientes para generar un reporte. Agrega actividades e insumos primero.');
+      errorMessageSnack(context,
+          'Este cultivo no tiene datos suficientes para generar un reporte. Agrega actividades e insumos primero.');
       return;
     }
 
@@ -106,7 +147,8 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
               Icon(Icons.agriculture, color: Colors.green[700]),
@@ -119,23 +161,29 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDetailRow('Tipo', crop.cropType),
-              _buildDetailRow('Variedad', crop.cropVariety ?? 'No especificada'),
-              _buildDetailRow('Parcela', crop.plotName ?? 'Parcela ${crop.plotId}'),
+              _buildDetailRow(
+                  'Variedad', crop.cropVariety ?? 'No especificada'),
+              _buildDetailRow(
+                  'Parcela', crop.plotName ?? 'Parcela ${crop.plotId}'),
               _buildDetailRow('Fecha Siembra', _formatDate(crop.plantingDate)),
               _buildDetailRow('Fecha Cosecha', _formatDate(crop.harvestDate)),
-              _buildDetailRow('Costo Total', '\$${crop.costTotal.toStringAsFixed(2)}'),
+              _buildDetailRow(
+                  'Costo Total', '\$${crop.costTotal.toStringAsFixed(2)}'),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _getStatusColor(crop).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _getStatusColor(crop).withOpacity(0.3)),
+                  border:
+                      Border.all(color: _getStatusColor(crop).withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      _canGenerateReport(crop) ? Icons.check_circle : Icons.info,
+                      _canGenerateReport(crop)
+                          ? Icons.check_circle
+                          : Icons.info,
                       color: _getStatusColor(crop),
                       size: 16,
                     ),
@@ -202,7 +250,8 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
         leading: InkWell(
           borderRadius: BorderRadius.circular(30),
           onTap: () => Get.back(),
-          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+          child: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.black87),
         ),
         title: const Text(
           'Generar Reporte de Cultivo',
@@ -217,20 +266,20 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
       body: _isLoading
           ? _buildLoading()
           : _crops.isEmpty
-          ? _buildEmptyState()
-          : _buildCropSelection(),
+              ? _buildEmptyState()
+              : _buildCropSelection(),
       floatingActionButton: _selectedCrop != null
           ? FloatingActionButton.extended(
-        onPressed: _generateReport,
-        icon: const Icon(Icons.assessment, color: Colors.white),
-        label: const Text(
-          'Generar Reporte',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: _canGenerateReport(_selectedCrop!)
-            ? const Color(0xFF4CAF50)
-            : Colors.grey,
-      )
+              onPressed: _generateReport,
+              icon: const Icon(Icons.assessment, color: Colors.white),
+              label: const Text(
+                'Generar Reporte',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: _canGenerateReport(_selectedCrop!)
+                  ? const Color(0xFF4CAF50)
+                  : Colors.grey,
+            )
           : null,
     );
   }
@@ -279,7 +328,9 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: isSelected ? Colors.blue.shade300 : Colors.grey.shade300,
+                    color: isSelected
+                        ? Colors.blue.shade300
+                        : Colors.grey.shade300,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -306,7 +357,8 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Variedad: ${crop.cropVariety ?? "No especificada"}'),
+                      Text(
+                          'Variedad: ${crop.cropVariety ?? "No especificada"}'),
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -327,7 +379,8 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: _getStatusColor(crop).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -406,7 +459,8 @@ class _SelectCropReportScreenState extends State<SelectCropReportScreen> {
           const SizedBox(height: 20),
           const Text(
             'No hay cultivos registrados',
-            style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           const Padding(
