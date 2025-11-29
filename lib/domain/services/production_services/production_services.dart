@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:agrosig/domain/response/response_qr/response.qr.dart';
 import 'package:http/http.dart' as http;
 import 'package:agrosig/config/keys.dart';
 import 'package:agrosig/data/local_secure/secure_storage.dart';
@@ -15,7 +16,8 @@ class ProductionBatchService {
   ProductionBatchService() : _client = CustomHttpClient.create();
 
   // Crear nuevo lote de producción
-  Future<ProductionBatchResponse> registerProductionBatch(int cropId, String name) async {
+  Future<ProductionBatchResponse> registerProductionBatch(
+      int cropId, String name) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -42,14 +44,16 @@ class ProductionBatchService {
         final decodedData = jsonDecode(response.body);
         return ProductionBatchResponse(
           success: true,
-          message: decodedData['message'] ?? 'Lote de producción creado exitosamente',
+          message: decodedData['message'] ??
+              'Lote de producción creado exitosamente',
           data: ProductionBatch.fromJson(decodedData['data']),
         );
       } else {
         final errorData = json.decode(response.body);
         return ProductionBatchResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al crear el lote de producción',
+          message:
+              errorData['message'] ?? 'Error al crear el lote de producción',
           data: null,
         );
       }
@@ -62,7 +66,8 @@ class ProductionBatchService {
   }
 
   // Obtener lista de lotes de producción con paginación
-  Future<ProductionBatchListResponse> getProductionBatches({int page = 1, int limit = 10}) async {
+  Future<ProductionBatchListResponse> getProductionBatches(
+      {int page = 1, int limit = 10}) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -72,7 +77,8 @@ class ProductionBatchService {
       }
 
       final response = await _client.get(
-        Uri.parse('${Environment.production}/productions?page=$page&limit=$limit'),
+        Uri.parse(
+            '${Environment.production}/productions?page=$page&limit=$limit'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -91,7 +97,8 @@ class ProductionBatchService {
         final errorData = jsonDecode(response.body);
         return ProductionBatchListResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al obtener lotes de producción',
+          message:
+              errorData['message'] ?? 'Error al obtener lotes de producción',
           data: ProductionBatchListData(
             batches: [],
             pagination: PaginationInfo(
@@ -125,7 +132,8 @@ class ProductionBatchService {
   }
 
   // Obtener detalle de un lote de producción
-  Future<ProductionBatchDetailResponse> getProductionBatchDetail(int productionId) async {
+  Future<ProductionBatchDetailResponse> getProductionBatchDetail(
+      int productionId) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -152,14 +160,16 @@ class ProductionBatchService {
 
         return ProductionBatchDetailResponse(
           success: true,
-          message: decodedData['message'] ?? 'Detalle del lote obtenido exitosamente',
+          message: decodedData['message'] ??
+              'Detalle del lote obtenido exitosamente',
           data: ProductionBatchDetail.fromJson(data),
         );
       } else {
         final errorData = json.decode(response.body);
         return ProductionBatchDetailResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al obtener el detalle del lote',
+          message:
+              errorData['message'] ?? 'Error al obtener el detalle del lote',
           data: ProductionBatchDetail.fromJson({}),
         );
       }
@@ -186,7 +196,8 @@ class ProductionBatchService {
       }
 
       final response = await _client.get(
-        Uri.parse('${Environment.production}/available-activities/$productionId'),
+        Uri.parse(
+            '${Environment.production}/available-activities/$productionId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -205,7 +216,8 @@ class ProductionBatchService {
         final errorData = json.decode(response.body);
         return ActivityListResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al obtener las actividades disponibles',
+          message: errorData['message'] ??
+              'Error al obtener las actividades disponibles',
           data: [],
         );
       }
@@ -227,6 +239,8 @@ class ProductionBatchService {
         throw Exception('No authentication token found');
       }
 
+      print('🔄 Obteniendo actividades para productionId: $productionId');
+
       final response = await _client.get(
         Uri.parse('${Environment.production}/activities/$productionId'),
         headers: {
@@ -237,30 +251,48 @@ class ProductionBatchService {
         },
       );
 
-      print('Get Batch Activities Status: ${response.statusCode}');
-      print('Get Batch Activities Response: ${response.body}');
+      print('📡 Status Code: ${response.statusCode}');
+      print('📦 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        return ActivityListResponse.fromJson(responseData);
+        final activityResponse = ActivityListResponse.fromJson(responseData);
+
+        print('✅ Actividades obtenidas: ${activityResponse.data.length}');
+
+        // Debug: Imprimir cada actividad
+        for (var activity in activityResponse.data) {
+          print(
+              '📋 Actividad: ${activity.activityType} - ${activity.description}');
+          print('   Inputs: ${activity.inputs.length}');
+        }
+
+        return activityResponse;
       } else {
         final errorData = json.decode(response.body);
+        final errorMessage =
+            errorData['message'] ?? 'Error al obtener las actividades del lote';
+
+        print('❌ Error: $errorMessage');
+
         return ActivityListResponse(
           success: false,
-          message: errorData['message'] ?? 'Error al obtener las actividades del lote',
+          message: errorMessage,
           data: [],
         );
       }
     } on SocketException {
+      print('🌐 Error de conexión');
       throw Exception('Error de conexión: No hay internet');
     } catch (error) {
-      print('Error getting batch activities: $error');
+      print('💥 Error getting batch activities: $error');
       throw Exception('Error en el servidor: ${error.toString()}');
     }
   }
 
   // Asociar actividades a un lote
-  Future<AssociateActivitiesResponse> associateActivities(int productionId, List<int> activityIds) async {
+  Future<AssociateActivitiesResponse> associateActivities(
+      int productionId, List<int> activityIds) async {
     try {
       final token = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -270,7 +302,8 @@ class ProductionBatchService {
       }
 
       final response = await _client.post(
-        Uri.parse('${Environment.production}/associate-activities/$productionId'),
+        Uri.parse(
+            '${Environment.production}/associate-activities/$productionId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -287,7 +320,8 @@ class ProductionBatchService {
         final decodedData = jsonDecode(response.body);
         return AssociateActivitiesResponse(
           success: true,
-          message: decodedData['message'] ?? 'Actividades asociadas exitosamente',
+          message:
+              decodedData['message'] ?? 'Actividades asociadas exitosamente',
           data: decodedData['data'],
         );
       } else {
@@ -423,6 +457,63 @@ class ProductionBatchService {
     } catch (error) {
       print('Error getting batch unique code: $error');
       throw Exception('Error al obtener el código único: $error');
+    }
+  }
+
+  Future<QRCodeResponse> getQRCodeData(int productionId) async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      final refreshToken = await _secureStorage.getRefreshToken();
+
+      if (token == null || refreshToken == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _client.get(
+        Uri.parse('${Environment.production}/get-qr/$productionId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-refresh-token': refreshToken,
+        },
+      );
+
+      print('Get QR Code Data Status: ${response.statusCode}');
+      print('Get QR Code Data Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        return QRCodeResponse.fromJson(decodedData);
+      } else {
+        final errorData = json.decode(response.body);
+        final errorMessage =
+            errorData['message'] ?? 'Error al obtener el código QR';
+        print('Error response: $errorMessage');
+        throw Exception(errorMessage);
+      }
+    } on SocketException {
+      throw Exception('Error de conexión: No hay internet');
+    } catch (error) {
+      print('Error getting QR code data: $error');
+      throw Exception('Error en el servidor: ${error.toString()}');
+    }
+  }
+
+  Future<ProductionBatchDetailResponse> getProductionBatchDetailSafe(
+      int productionId) async {
+    try {
+      final response = await getProductionBatchDetail(productionId);
+      if (response.success) {
+        return response;
+      } else {
+        // Si falla, intentar una segunda vez después de un breve delay
+        await Future.delayed(Duration(milliseconds: 500));
+        return await getProductionBatchDetail(productionId);
+      }
+    } catch (e) {
+      print('Error in getProductionBatchDetailSafe: $e');
+      rethrow;
     }
   }
 
