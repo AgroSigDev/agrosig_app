@@ -104,7 +104,6 @@ class PlotServices {
         if (decodedData['data'] != null &&
             decodedData['data'] is List &&
             decodedData['data'].isNotEmpty) {
-
           // Usar el primer elemento de la lista
           return Plot.fromJson(decodedData['data'][0]);
         } else {
