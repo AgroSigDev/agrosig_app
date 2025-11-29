@@ -115,16 +115,16 @@ class _QRViewScreenState extends State<QRViewScreen>
           _isLoading = false;
         });
 
-        print('✅ QR cargado - Unique Code: $_uniqueCode');
+        print('QR cargado - Unique Code: $_uniqueCode');
       } else {
         setState(() {
           _errorMessage = response.message;
           _isLoading = false;
         });
-        print('❌ Error cargando QR: ${response.message}');
+        print('Error cargando QR: ${response.message}');
       }
     } catch (e) {
-      print('💥 Error en _loadQRData: $e');
+      print('Error en _loadQRData: $e');
       setState(() {
         _errorMessage = 'Error al cargar QR: $e';
         _isLoading = false;
@@ -141,14 +141,8 @@ class _QRViewScreenState extends State<QRViewScreen>
     });
 
     try {
-      print(
-          '🔄 Cargando actividades para productionId: ${widget.productionId}');
-
       final response =
           await _productionBatchService.getBatchActivities(widget.productionId);
-
-      print('📊 Respuesta de actividades - Success: ${response.success}');
-      print('📊 Cantidad de actividades: ${response.data.length}');
 
       if (response.success) {
         setState(() {
@@ -156,28 +150,17 @@ class _QRViewScreenState extends State<QRViewScreen>
           _activityCount = _activities.length;
           _hasActivities = _activities.isNotEmpty;
         });
-
-        print('✅ Actividades cargadas: $_activityCount');
-        print('✅ ¿Tiene actividades?: $_hasActivities');
-
-        // Debug: Imprimir todas las actividades
-        for (var activity in _activities) {
-          print(
-              '🎯 Actividad: ${activity.activityId} - ${activity.activityType}');
-          print('   Descripción: ${activity.description}');
-          print('   Inputs: ${activity.inputs.length}');
-        }
       } else {
         setState(() {
           _activitiesError = response.message;
         });
-        print('❌ Error cargando actividades: ${response.message}');
+        print('Error cargando actividades: ${response.message}');
       }
     } catch (e) {
       setState(() {
         _activitiesError = 'Error: $e';
       });
-      print('💥 Error en _loadActivitiesInBackground: $e');
+      print('Error en _loadActivitiesInBackground: $e');
     } finally {
       setState(() {
         _activitiesLoading = false;
@@ -190,9 +173,9 @@ class _QRViewScreenState extends State<QRViewScreen>
       setState(() {
         _traceabilityUrl = '${Environment.vercelUrl}/trazabilidad/$_uniqueCode';
       });
-      print('🔗 URL de trazabilidad construida: $_traceabilityUrl');
+      print('URL de trazabilidad construida: $_traceabilityUrl');
     } else {
-      print('⚠️ unique_code está vacío, no se puede construir la URL');
+      print('unique_code está vacío, no se puede construir la URL');
     }
   }
 
@@ -264,19 +247,17 @@ class _QRViewScreenState extends State<QRViewScreen>
     });
   }
 
-  // SOLUCIÓN: Abrir URL sin cerrar la app
   Future<void> _openTraceabilityUrl() async {
     if (_traceabilityUrl.isEmpty) return;
 
     try {
       final Uri url = Uri.parse(_traceabilityUrl);
 
-      // SOLUCIÓN: Usar launchUrl con modo externalApplication
       if (await canLaunchUrl(url)) {
         await launchUrl(
           url,
           mode: LaunchMode
-              .externalApplication, // ← Esto evita que se cierre la app
+              .externalApplication,
         );
       } else {
         _showErrorSnackBar('No se pudo abrir la URL: $_traceabilityUrl');
